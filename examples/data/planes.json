@@ -1,0 +1,4 @@
+{"id":1,"name":"P-51","speed":403,"range":1650,"enginetype":"inline","country":"USA","planetype":"fighter"}
+{"id":2,"name":"ME-109","speed":358,"range":734,"enginetype":"inline","country":"Germany","planetype":"fighter"}
+{"id":3,"name":"Spitfire","speed":355,"range":742,"enginetype":"inline","country":"Great Britain","planetype":"fighter"}
+{"id":4,"name":"P-38","speed":399,"range":1332,"enginetype":"inline","country":"USA","planetype":"fighter"}
