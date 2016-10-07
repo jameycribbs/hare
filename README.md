@@ -1,6 +1,8 @@
 Keywords: Golang, go, database, DBMS, JSON
 
-### Hare - A simple, file-based Database Management System (DBMS) for Go
+[[https://github.com/jameycribbs/hare/blob/master/hare.jpg|alt=hare]]
+
+### Hare - A nimble little database management system for Go
 
 Hare is a database management system that stores all records for a table as newline delimited __JSON__ strings. It can be __embedded__ into your program and is safe to use in goroutines (it uses mutexes) as long as each goroutine shares the database connection.  This makes it ok to use in a web application.
 
