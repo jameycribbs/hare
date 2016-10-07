@@ -1,6 +1,6 @@
 Keywords: Golang, go, database, DBMS, JSON
 
-[[https://github.com/jameycribbs/hare/blob/master/hare.jpg|alt=hare]]
+[[https://github.com/jameycribbs/hare/blob/master/hare.jpg]]
 
 ### Hare - A nimble little database management system for Go
 
