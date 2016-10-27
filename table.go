@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -14,8 +14,9 @@ const dummyRune = 'X'
 
 type table struct {
 	filePtr *os.File
-	rwLock  *sync.RWMutex
-	lastID  int
+	sync.RWMutex
+	lastID int
+	index  map[int]int64
 }
 
 type Record interface {
@@ -24,14 +25,23 @@ type Record interface {
 }
 
 type DummiesTooShortError struct {
-	Msg string
 }
 
-func (e *DummiesTooShortError) Error() string {
-	return fmt.Sprintf("%s", e.Msg)
+func (e DummiesTooShortError) Error() string {
+	return ""
+}
+
+type ForEachBreak struct {
+}
+
+func (e ForEachBreak) Error() string {
+	return ""
 }
 
 func (tbl *table) Create(rec Record) (int, error) {
+	tbl.Lock()
+	defer tbl.Unlock()
+
 	var err error
 	var offset int64
 	var whence int
@@ -50,38 +60,58 @@ func (tbl *table) Create(rec Record) (int, error) {
 	switch err := err.(type) {
 	case nil:
 		whence = 0
-	case *DummiesTooShortError:
-		offset = 0
+	case DummiesTooShortError:
 		whence = 2
 	default:
 		return 0, err
 	}
 
-	if err = tbl.writeRec(offset, whence, rawRec); err != nil {
+	if whence == 2 {
+		offset, err = tbl.filePtr.Seek(0, 2)
+
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	if err = tbl.writeRec(offset, 0, rawRec); err != nil {
 		return 0, err
 	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	tbl.index[recID] = offset
 
 	return recID, nil
 }
 
 func (tbl *table) Destroy(recID int) error {
 	var err error
-	var recLength int
-	var recOffset int64
 
-	if _, recOffset, recLength, err = tbl.readRec(recID); err != nil {
+	tbl.Lock()
+	defer tbl.Unlock()
+
+	rawRec, err := tbl.readRec(tbl.index[recID])
+	if err != nil {
 		return err
 	}
 
-	if err = tbl.overwriteRec(recOffset, recLength); err != nil {
+	if err = tbl.overwriteRec(tbl.index[recID], len(rawRec)); err != nil {
 		return err
 	}
+
+	delete(tbl.index, recID)
 
 	return nil
 }
 
 func (tbl *table) Find(recID int, rec Record) error {
-	rawRec, _, _, err := tbl.readRec(recID)
+	tbl.RLock()
+	defer tbl.RUnlock()
+
+	rawRec, err := tbl.readRec(tbl.index[recID])
 	if err != nil {
 		return err
 	}
@@ -90,11 +120,151 @@ func (tbl *table) Find(recID int, rec Record) error {
 		return err
 	}
 
+	if recID != rec.GetID() {
+		return errors.New("Find Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
+	}
+
 	return err
 }
 
-func (tbl *table) ForEachID(f func(int) error) error {
+func (tbl *table) ForEach(f func(map[string]interface{}) error) error {
 	var recMap map[string]interface{}
+
+	for recID := range tbl.index {
+		rawRec, err := tbl.readRec(tbl.index[recID])
+		if err != nil {
+			return err
+		}
+
+		if err = json.Unmarshal(rawRec, &recMap); err != nil {
+			return err
+		}
+
+		err = f(recMap)
+
+		switch err := err.(type) {
+		case nil:
+			continue
+		case ForEachBreak:
+			return nil
+		default:
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (tbl *table) Update(rec Record) error {
+	tbl.Lock()
+	defer tbl.Unlock()
+
+	var offset int64
+	var goToEoF bool
+
+	recID := rec.GetID()
+
+	oldRecOffset := tbl.index[recID]
+
+	oldRec, err := tbl.readRec(oldRecOffset)
+	if err != nil {
+		return err
+	}
+
+	oldRecLen := len(oldRec)
+
+	newRec, err := json.Marshal(rec)
+	if err != nil {
+		return err
+	}
+
+	newRecLen := len(newRec)
+
+	diff := oldRecLen - (newRecLen + 1)
+
+	if diff > 0 {
+		// Changed record is smaller than record in table.
+
+		extraData := make([]byte, diff)
+
+		for i, _ := range extraData {
+			if i == 0 {
+				extraData[i] = '\n'
+			} else {
+				extraData[i] = 'X'
+			}
+		}
+
+		newRec = append(newRec, extraData...)
+
+		err = tbl.writeRec(oldRecOffset, 0, newRec)
+		if err != nil {
+			return err
+		}
+
+	} else if diff < 0 {
+		// Changed record is larger than the record in table.
+
+		// First check to see if we can fit it onto a line with a dummy record...
+		offset, err = tbl.offsetToFitRec(len(newRec))
+
+		switch err := err.(type) {
+		case nil:
+		case DummiesTooShortError:
+			goToEoF = true
+		default:
+			return err
+		}
+
+		// If we can't fit the updated record onto a line with a dummy record, then go to the End of File.
+		if goToEoF {
+			offset, err = tbl.filePtr.Seek(0, 2)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = tbl.writeRec(offset, 0, newRec)
+		if err != nil {
+			return err
+		}
+
+		// Turn old rec into a dummy.
+		if err = tbl.overwriteRec(tbl.index[recID], oldRecLen); err != nil {
+			return err
+		}
+
+		// Update index with new offset since record is in new position in the file.
+		tbl.index[recID] = offset
+	} else {
+		// Changed record is same length as record in table.
+
+		err = tbl.writeRec(tbl.index[recID], 0, newRec)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+//******************************************************************************
+// PRIVATE METHODS
+//******************************************************************************
+
+func (tbl *table) incrementLastID() int {
+	tbl.lastID += 1
+
+	return tbl.lastID
+}
+
+func (tbl *table) initIndex() error {
+	var recOffset int64
+	var totalOffset int64
+	var recLength int
+	var recMap map[string]interface{}
+
+	tbl.index = make(map[int]int64)
 
 	r := bufio.NewReader(tbl.filePtr)
 
@@ -105,6 +275,10 @@ func (tbl *table) ForEachID(f func(int) error) error {
 
 	for {
 		rawRec, err := r.ReadBytes('\n')
+
+		recOffset = totalOffset
+		recLength = len(rawRec)
+		totalOffset += int64(recLength)
 
 		if err == io.EOF {
 			break
@@ -126,141 +300,20 @@ func (tbl *table) ForEachID(f func(int) error) error {
 
 		recMapID := int(recMap["id"].(float64))
 
-		if err = f(recMapID); err != nil {
-			return err
-		}
+		tbl.index[recMapID] = recOffset
 	}
 
 	return nil
 }
 
-func (tbl *table) Update(rec Record) error {
-	var offset int64
-	var whence int
+func (tbl *table) initLastID() {
+	tbl.lastID = 0
 
-	recID := rec.GetID()
-
-	_, recOffset, recLength, err := tbl.readRec(recID)
-	if err != nil {
-		return err
-	}
-
-	rawRec, err := json.Marshal(rec)
-	if err != nil {
-		return err
-	}
-
-	diff := recLength - (len(rawRec) + 1)
-
-	if diff > 0 {
-		// Changed record is smaller than record in table.
-
-		offset = recOffset
-		whence = 0
-
-		extraData := make([]byte, diff)
-
-		for i, _ := range extraData {
-			if i == 0 {
-				extraData[i] = '\n'
-			} else {
-				extraData[i] = 'X'
-			}
-		}
-
-		rawRec = append(rawRec, extraData...)
-
-		err = tbl.writeRec(recOffset, 0, rawRec)
-		if err != nil {
-			return err
-		}
-
-	} else if diff < 0 {
-		// Changed record is larger than the record in table.
-
-		// First check to see if we can fit it onto a line with a dummy record...
-		offset, err = tbl.offsetToFitRec(len(rawRec))
-
-		switch err := err.(type) {
-		case nil:
-			whence = 0
-		case *DummiesTooShortError:
-			offset = 0
-			whence = 2
-		default:
-			return err
-		}
-
-		err = tbl.writeRec(offset, whence, rawRec)
-		if err != nil {
-			return err
-		}
-
-		// Turn old rec into a dummy.
-		if err = tbl.overwriteRec(recOffset, recLength); err != nil {
-			return err
-		}
-	} else {
-		// Changed record is same length as record in table.
-
-		err = tbl.writeRec(recOffset, 0, rawRec)
-		if err != nil {
-			return err
+	for k := range tbl.index {
+		if k > tbl.lastID {
+			tbl.lastID = k
 		}
 	}
-
-	return nil
-}
-
-//******************************************************************************
-// PRIVATE METHODS
-//******************************************************************************
-
-func (tbl *table) incrementLastID() int {
-	tbl.lastID += 1
-
-	return tbl.lastID
-}
-
-func (tbl *table) initLastID() error {
-	var err error
-	var recMap map[string]interface{}
-
-	r := bufio.NewReader(tbl.filePtr)
-
-	if _, err = tbl.filePtr.Seek(0, 0); err != nil {
-		return err
-	}
-
-	for {
-		rawRec, err := r.ReadBytes('\n')
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		// If this is a record that has been deleted or is the result of an update that left extra data on the line, then skip this
-		// dummy record.
-		if (rawRec[0] == '\n') || (rawRec[0] == dummyRune) {
-			continue
-		}
-
-		if err = json.Unmarshal(rawRec, &recMap); err != nil {
-			return err
-		}
-
-		recMapID := int(recMap["id"].(float64))
-
-		if recMapID > tbl.lastID {
-			tbl.lastID = recMapID
-		}
-	}
-
-	return nil
 }
 
 func (tbl *table) offsetToFitRec(recLengthNeeded int) (int64, error) {
@@ -300,7 +353,7 @@ func (tbl *table) offsetToFitRec(recLengthNeeded int) (int64, error) {
 		}
 	}
 
-	return 0, &DummiesTooShortError{"No dummy records of sufficient length found!"}
+	return 0, DummiesTooShortError{}
 }
 
 func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
@@ -321,52 +374,27 @@ func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
 	return nil
 }
 
-func (tbl *table) readRec(recID int) ([]byte, int64, int, error) {
-	var recOffset int64
-	var totalOffset int64
-	var recLength int
+func (tbl *table) readRec(offset int64) ([]byte, error) {
 	var recMap map[string]interface{}
 
 	r := bufio.NewReader(tbl.filePtr)
 
-	_, err := tbl.filePtr.Seek(0, 0)
+	_, err := tbl.filePtr.Seek(offset, 0)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, err
 	}
 
-	for {
-		rawRec, err := r.ReadBytes('\n')
+	rawRec, err := r.ReadBytes('\n')
 
-		recOffset = totalOffset
-		recLength = len(rawRec)
-		totalOffset += int64(recLength)
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return nil, 0, 0, err
-		}
-
-		// If this is a record that has been deleted or is the result of an update that left extra data on the line, then skip this
-		// dummy record.
-		if (rawRec[0] == '\n') || (rawRec[0] == dummyRune) {
-			continue
-		}
-
-		if err := json.Unmarshal(rawRec, &recMap); err != nil {
-			return nil, 0, 0, err
-		}
-
-		recMapID := int(recMap["id"].(float64))
-
-		if recMapID == recID {
-			return rawRec, recOffset, recLength, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, 0, 0, errors.New("Record not found!")
+	if err := json.Unmarshal(rawRec, &recMap); err != nil {
+		return nil, err
+	}
+
+	return rawRec, err
 }
 
 func (tbl *table) writeRec(offset int64, whence int, rec []byte) error {

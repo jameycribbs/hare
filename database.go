@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"sync"
 )
 
 const tblExt = ".json"
@@ -35,7 +34,7 @@ func OpenDB(dbPath string) (*database, error) {
 					return nil, err
 				}
 
-				tbl.rwLock = new(sync.RWMutex)
+				tbl.initIndex()
 				tbl.initLastID()
 
 				db.tables[strings.TrimSuffix(file.Name(), tblExt)] = &tbl
@@ -62,8 +61,8 @@ func (db *database) DropTable(tblName string) error {
 		return err
 	}
 
-	tbl.rwLock.Lock()
-	tbl.rwLock.Unlock()
+	tbl.Lock()
+	defer tbl.Unlock()
 
 	if err = tbl.filePtr.Close(); err != nil {
 		return err
@@ -94,7 +93,7 @@ func (db *database) CreateTable(tblName string) (*table, error) {
 		return nil, err
 	}
 
-	tbl.rwLock = new(sync.RWMutex)
+	tbl.initIndex()
 	tbl.initLastID()
 
 	db.tables[tblName] = &tbl
@@ -112,11 +111,12 @@ func (db *database) GetTable(tblName string) (*table, error) {
 
 func (db *database) Close() {
 	for _, tbl := range db.tables {
-		tbl.rwLock.Lock()
-		tbl.rwLock.Unlock()
+		tbl.Lock()
 
 		if err := tbl.filePtr.Close(); err != nil {
 			panic(err)
 		}
+
+		tbl.Unlock()
 	}
 }
