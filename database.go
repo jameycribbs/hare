@@ -9,15 +9,15 @@ import (
 
 const tblExt = ".json"
 
-type database struct {
+type Database struct {
 	path   string
 	tables map[string]*table
 }
 
-func OpenDB(dbPath string) (*database, error) {
+func OpenDB(dbPath string) (*Database, error) {
 	var err error
 
-	db := new(database)
+	db := new(Database)
 	db.path = dbPath
 
 	db.tables = make(map[string]*table)
@@ -45,7 +45,7 @@ func OpenDB(dbPath string) (*database, error) {
 	return db, nil
 }
 
-func (db *database) TableExists(tblName string) bool {
+func (db *Database) TableExists(tblName string) bool {
 	if db.tables[tblName] == nil {
 		return false
 	} else {
@@ -53,7 +53,7 @@ func (db *database) TableExists(tblName string) bool {
 	}
 }
 
-func (db *database) DropTable(tblName string) error {
+func (db *Database) DropTable(tblName string) error {
 	var err error
 
 	tbl, err := db.GetTable(tblName)
@@ -79,7 +79,7 @@ func (db *database) DropTable(tblName string) error {
 	return nil
 }
 
-func (db *database) CreateTable(tblName string) (*table, error) {
+func (db *Database) CreateTable(tblName string) (*table, error) {
 	var err error
 
 	if db.TableExists(tblName) {
@@ -101,7 +101,7 @@ func (db *database) CreateTable(tblName string) (*table, error) {
 	return db.tables[tblName], nil
 }
 
-func (db *database) GetTable(tblName string) (*table, error) {
+func (db *Database) GetTable(tblName string) (*table, error) {
 	if !db.TableExists(tblName) {
 		return nil, errors.New("Table does not exist!")
 	}
@@ -109,7 +109,7 @@ func (db *database) GetTable(tblName string) (*table, error) {
 	return db.tables[tblName], nil
 }
 
-func (db *database) Close() {
+func (db *Database) Close() {
 	for _, tbl := range db.tables {
 		tbl.Lock()
 

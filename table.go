@@ -31,10 +31,10 @@ func (e DummiesTooShortError) Error() string {
 	return ""
 }
 
-type ForEachBreak struct {
+type ForEachIDBreak struct {
 }
 
-func (e ForEachBreak) Error() string {
+func (e ForEachIDBreak) Error() string {
 	return ""
 }
 
@@ -66,6 +66,7 @@ func (tbl *table) Create(rec Record) (int, error) {
 		return 0, err
 	}
 
+	// Line too big to fit on any dummy record line, so go to the end of file so we can add it to end of the file.
 	if whence == 2 {
 		offset, err = tbl.filePtr.Seek(0, 2)
 
@@ -93,12 +94,17 @@ func (tbl *table) Destroy(recID int) error {
 	tbl.Lock()
 	defer tbl.Unlock()
 
-	rawRec, err := tbl.readRec(tbl.index[recID])
+	offset, ok := tbl.index[recID]
+	if !ok {
+		return errors.New("Destroy Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
+	}
+
+	rawRec, err := tbl.readRec(offset)
 	if err != nil {
 		return err
 	}
 
-	if err = tbl.overwriteRec(tbl.index[recID], len(rawRec)); err != nil {
+	if err = tbl.overwriteRec(offset, len(rawRec)); err != nil {
 		return err
 	}
 
@@ -111,7 +117,12 @@ func (tbl *table) Find(recID int, rec Record) error {
 	tbl.RLock()
 	defer tbl.RUnlock()
 
-	rawRec, err := tbl.readRec(tbl.index[recID])
+	offset, ok := tbl.index[recID]
+	if !ok {
+		return errors.New("Find Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
+	}
+
+	rawRec, err := tbl.readRec(offset)
 	if err != nil {
 		return err
 	}
@@ -127,25 +138,15 @@ func (tbl *table) Find(recID int, rec Record) error {
 	return err
 }
 
-func (tbl *table) ForEach(f func(map[string]interface{}) error) error {
-	var recMap map[string]interface{}
-
+func (tbl *table) ForEachID(f func(int) error) error {
 	for recID := range tbl.index {
-		rawRec, err := tbl.readRec(tbl.index[recID])
-		if err != nil {
-			return err
-		}
 
-		if err = json.Unmarshal(rawRec, &recMap); err != nil {
-			return err
-		}
-
-		err = f(recMap)
+		err := f(recID)
 
 		switch err := err.(type) {
 		case nil:
 			continue
-		case ForEachBreak:
+		case ForEachIDBreak:
 			return nil
 		default:
 			return err
@@ -164,7 +165,10 @@ func (tbl *table) Update(rec Record) error {
 
 	recID := rec.GetID()
 
-	oldRecOffset := tbl.index[recID]
+	oldRecOffset, ok := tbl.index[recID]
+	if !ok {
+		return errors.New("Update Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
+	}
 
 	oldRec, err := tbl.readRec(oldRecOffset)
 	if err != nil {
@@ -230,7 +234,7 @@ func (tbl *table) Update(rec Record) error {
 		}
 
 		// Turn old rec into a dummy.
-		if err = tbl.overwriteRec(tbl.index[recID], oldRecLen); err != nil {
+		if err = tbl.overwriteRec(oldRecOffset, oldRecLen); err != nil {
 			return err
 		}
 
@@ -375,8 +379,6 @@ func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
 }
 
 func (tbl *table) readRec(offset int64) ([]byte, error) {
-	var recMap map[string]interface{}
-
 	r := bufio.NewReader(tbl.filePtr)
 
 	_, err := tbl.filePtr.Seek(offset, 0)
@@ -385,12 +387,7 @@ func (tbl *table) readRec(offset int64) ([]byte, error) {
 	}
 
 	rawRec, err := r.ReadBytes('\n')
-
 	if err != nil {
-		return nil, err
-	}
-
-	if err := json.Unmarshal(rawRec, &recMap); err != nil {
 		return nil, err
 	}
 

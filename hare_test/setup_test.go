@@ -1,14 +1,16 @@
-package hare
+package hare_test
 
 import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/jameycribbs/hare"
 )
 
 const dataDir = "test_data"
 
-var db *database
+var db *hare.Database
 
 type Foo struct {
 	ID  int    `json:"id"`
@@ -21,6 +23,13 @@ func (foo *Foo) SetID(id int) {
 
 func (foo *Foo) GetID() int {
 	return foo.ID
+}
+
+func fooFromRecMap(recMap map[string]interface{}) Foo {
+	return Foo{
+		ID:  int(recMap["id"].(float64)),
+		Bar: recMap["bar"].(string),
+	}
 }
 
 func TestMain(m *testing.M) {
@@ -41,7 +50,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	db, err = OpenDB("test_data")
+	db, err = hare.OpenDB("test_data")
 	if err != nil {
 		fmt.Println("Failed to open database:", err)
 		os.Exit(1)
@@ -58,43 +67,4 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(result)
-}
-
-//-----------------------------------------------------------------------------
-// Tests
-//-----------------------------------------------------------------------------
-func TestCreateTable(t *testing.T) {
-	_, err := db.CreateTable("foos")
-	if err != nil {
-		t.Error("TestCreateTable:", err)
-	}
-
-	if !db.TableExists("foos") {
-		t.Error("TestCreateTable:", err)
-	}
-
-	err = db.DropTable("foos")
-	if err != nil {
-		t.Error("TestCreateTable:", err)
-	}
-}
-
-func TestDestroyTable(t *testing.T) {
-	_, err := db.CreateTable("foos")
-	if err != nil {
-		t.Error("TestDestroyTable:", err)
-	}
-
-	if !db.TableExists("foos") {
-		t.Error("TestDestroyTable:", err)
-	}
-
-	err = db.DropTable("foos")
-	if err != nil {
-		t.Error("TestDestroyTable:", err)
-	}
-
-	if db.TableExists("foos") {
-		t.Error("TestDestroyTable:", err)
-	}
 }

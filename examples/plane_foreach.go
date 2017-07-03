@@ -29,19 +29,6 @@ func (plane *Plane) GetID() int {
 	return plane.ID
 }
 
-// Used in closure supplied to hare.ForEach function.
-func planeFromRecMap(recMap map[string]interface{}) Plane {
-	return Plane{
-		ID:         int(recMap["id"].(float64)),
-		Name:       recMap["name"].(string),
-		Speed:      int(recMap["speed"].(float64)),
-		Range:      int(recMap["range"].(float64)),
-		EngineType: recMap["enginetype"].(string),
-		Country:    recMap["country"].(string),
-		PlaneType:  recMap["planetype"].(string),
-	}
-}
-
 func main() {
 	cmd := exec.Command("cp", "data/planes_default.json", "data/planes.json")
 	if err := cmd.Run(); err != nil {
@@ -63,12 +50,16 @@ func main() {
 		panic(err)
 	}
 
-	// Get all planes with speed greater than 360...
-	err = planesTbl.ForEach(func(recMap map[string]interface{}) error {
-		plane := planeFromRecMap(recMap)
+	// Find
+	err = planesTbl.ForEachID(func(recID int) error {
+		var plane Plane
 
-		if plane.Speed > 360 {
-			fmt.Println("Plane with speed greater than 360:", plane)
+		if err = planesTbl.Find(recID, &plane); err != nil {
+			panic(err)
+		}
+
+		if plane.Speed < 360 {
+			fmt.Println("Plane with speed less than 360:", plane)
 		}
 		return nil
 	})
@@ -79,8 +70,12 @@ func main() {
 	var foundSpitfire Plane
 
 	// Find Spitfire...
-	err = planesTbl.ForEach(func(recMap map[string]interface{}) error {
-		plane := planeFromRecMap(recMap)
+	err = planesTbl.ForEachID(func(recID int) error {
+		var plane Plane
+
+		if err = planesTbl.Find(recID, &plane); err != nil {
+			panic(err)
+		}
 
 		if plane.Name == "Spitfire I" {
 			foundSpitfire = plane
@@ -88,7 +83,7 @@ func main() {
 			// If you want to exit the ForEach early, say, for example, because you
 			// found the record you were looking for, you need to do this inside
 			// your closure:
-			return hare.ForEachBreak{}
+			return hare.ForEachIDBreak{}
 		}
 
 		return nil

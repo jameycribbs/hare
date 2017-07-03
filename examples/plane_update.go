@@ -19,16 +19,6 @@ type Plane struct {
 	PlaneType  string `json:"planetype"`
 }
 
-func (plane *Plane) Populate(recMap map[string]interface{}) {
-	plane.ID = int(recMap["id"].(float64))
-	plane.Name = recMap["name"].(string)
-	plane.Speed = int(recMap["speed"].(float64))
-	plane.Range = int(recMap["range"].(float64))
-	plane.EngineType = recMap["enginetype"].(string)
-	plane.Country = recMap["country"].(string)
-	plane.PlaneType = recMap["planetype"].(string)
-}
-
 // Required method
 func (plane *Plane) SetID(id int) {
 	plane.ID = id
