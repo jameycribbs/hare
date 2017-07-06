@@ -57,7 +57,7 @@ func main() {
 #### Creating a table
 
 To create a table (represented as a json file), you can use the
-Database.CreateTable() function:
+Database.CreateTable() method:
 
 ```go
 contactsTbl, err := db.CreateTable("contacts")
@@ -93,7 +93,7 @@ func (contact *Contact) GetID() int {
 
 #### Creating a record
 
-To add a record, you can use the Table.Create() function:
+To add a record, you can use the Table.Create() method:
 
 ```go
 recID, err := contactsTbl.Create(&Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
@@ -102,7 +102,7 @@ recID, err := contactsTbl.Create(&Contact{FirstName: "John", LastName: "Doe", Ph
 
 #### Finding a record
 
-To find a record if you know the record ID, you can use the Table.Find() function:
+To find a record if you know the record ID, you can use the Table.Find() method:
 
 ```go
 var contact Contact
@@ -116,8 +116,8 @@ if err != nil {
 
 #### Searching records
 
-To search for a record by any field, you can use the Table.ForEachID() function
-by passing it a closure that defines your query:
+To search for a record by any field, you can use the Table.ForEachID() method
+by passing it a function that defines your query:
 
 ```go
 err = contactsTbl.ForEachID(func(recID int) error {
@@ -141,7 +141,7 @@ if err != nil {
 
 #### Updating a record
 
-To add a record, you can use the Table.Update() function:
+To add a record, you can use the Table.Update() method:
 
 ```go
 var contact Contact
@@ -161,7 +161,7 @@ if err = contactsTbl.Update(&contact); err != nil {
 
 #### Deleting a record
 
-To delete a record, you can use the Table.Destroy() function:
+To delete a record, you can use the Table.Destroy() method:
 
 ```go
 if err = contactsTbl.Destroy(recID); err != nil {
@@ -172,7 +172,7 @@ if err = contactsTbl.Destroy(recID); err != nil {
 
 #### Droping a table
 
-To delete a table you can use the Database.DropTable() function:
+To delete a table you can use the Database.DropTable() method:
 
 ```go
 if err = db.DropTable("contacts"); err != nil {
