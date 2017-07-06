@@ -185,7 +185,7 @@ if err = db.DropTable("contacts"); err != nil {
 
 * Records for each table are stored in a newline-delimited JSON file.
 
-* Hare uses mutexes for table locking.  You can have multiple readers
+* Mutexes are used for table locking.  You can have multiple readers
   or one writer for that table at one time, as long as all processes 
   share the same Database connection.
 
