@@ -44,7 +44,7 @@ import (
 func main() {
   // OpenDB takes a directory path pointing to zero or more json files and returns
   // a database connection.
-	db, err := hare.OpenDB("data")
+  db, err := hare.OpenDB("data")
   if err != nil {
     log.Fatal(err)
   }
@@ -74,20 +74,20 @@ on that structure:
 
 ```go
 type Contact struct {
-	// Required field
-	ID         int    `json:"id"`
-	FirstName  string `json:"firstname"`
-	LastName   string `json:"lastname"`
-	Phone      string `json:"phone"`
-	Age        int    `json:"age"`
+  // Required field
+  ID         int    `json:"id"`
+  FirstName  string `json:"firstname"`
+  LastName   string `json:"lastname"`
+  Phone      string `json:"phone"`
+  Age        int    `json:"age"`
 }
 
 func (contact *Contact) SetID(id int) {
-	contact.ID = id
+  contact.ID = id
 }
 
 func (contact *Contact) GetID() int {
-	return contact.ID
+  return contact.ID
 }
 ```
 
@@ -96,7 +96,7 @@ func (contact *Contact) GetID() int {
 To add a record, you can use the Table.Create() function:
 
 ```go
-	contactRecID, err := contactsTbl.Create(&Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
+recID, err := contactsTbl.Create(&Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
 ```
 
 
@@ -107,7 +107,7 @@ To find a record if you know the record ID, you can use the Table.Find() functio
 ```go
 var contact Contact
 
-err = contactsTbl.Find(1, &contact)
+err = contactsTbl.Find(recID, &contact)
 if err != nil {
   log.Fatal(err)
 }
@@ -129,7 +129,7 @@ err = contactsTbl.ForEachID(func(recID int) error {
 
   if contact.FirstName == "John" && contact.LastName == "Doe" {
     fmt.Println("Contact record for John Doe:", contact)
-		return hare.ForEachIDBreak{}
+    return hare.ForEachIDBreak{}
   }
   return nil
 })
@@ -146,7 +146,7 @@ To add a record, you can use the Table.Update() function:
 ```go
 var contact Contact
 
-err = contactsTbl.Find(1, &contact)
+err = contactsTbl.Find(recID, &contact)
 if err != nil {
   log.Fatal(err)
 }
@@ -164,7 +164,7 @@ if err = contactsTbl.Update(&contact); err != nil {
 To delete a record, you can use the Table.Destroy() function:
 
 ```go
-if err = contactsTbl.Destroy(1); err != nil {
+if err = contactsTbl.Destroy(recID); err != nil {
   log.Fatal(err)
 }
 ```
@@ -185,11 +185,7 @@ if err = db.DropTable("contacts"); err != nil {
 
 * Records for each table are stored in a newline-delimited JSON file.
 
-* Hare uses mutexes to ensure that only one database write happens at
-  one time, as long as all processes share the same Database connection.
-
-
-## Limitations
-
-* Under construction
+* Hare uses mutexes for table locking.  You can have multiple readers
+  or one writer for that table at one time, as long as all processes 
+  share the same Database connection.
 
