@@ -25,18 +25,11 @@ func (foo *Foo) GetID() int {
 	return foo.ID
 }
 
-func fooFromRecMap(recMap map[string]interface{}) Foo {
-	return Foo{
-		ID:  int(recMap["id"].(float64)),
-		Bar: recMap["bar"].(string),
-	}
-}
-
 func TestMain(m *testing.M) {
-	_, err := os.Stat(dataDir)
-	if err == nil {
-		err = os.RemoveAll(dataDir)
-		if err != nil {
+	var err error
+
+	if _, err := os.Stat(dataDir); err == nil {
+		if err = os.RemoveAll(dataDir); err != nil {
 			fmt.Println("Failed to remove test directory:", err)
 			os.Exit(1)
 		}
@@ -60,8 +53,7 @@ func TestMain(m *testing.M) {
 
 	db.Close()
 
-	err = os.RemoveAll(dataDir)
-	if err != nil {
+	if err = os.RemoveAll(dataDir); err != nil {
 		fmt.Println("Failed to remove test directory:", err)
 		os.Exit(1)
 	}

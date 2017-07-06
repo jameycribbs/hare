@@ -31,6 +31,7 @@ func (plane *Plane) GetID() int {
 
 func main() {
 	cmd := exec.Command("cp", "data/planes_default.json", "data/planes.json")
+
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}

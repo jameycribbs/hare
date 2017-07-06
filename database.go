@@ -1,3 +1,7 @@
+/*
+Package hare implements a simple DBMS that stores it's date
+in newline-delimited json files.
+*/
 package hare
 
 import (
@@ -9,11 +13,15 @@ import (
 
 const tblExt = ".json"
 
+// Database contains attributes for the database path and all tables
+// associated with the database.
 type Database struct {
 	path   string
 	tables map[string]*table
 }
 
+// OpenDB takes a directory path pointing to one or more json files and returns
+// a database connection.
 func OpenDB(dbPath string) (*Database, error) {
 	var err error
 
@@ -45,14 +53,17 @@ func OpenDB(dbPath string) (*Database, error) {
 	return db, nil
 }
 
+// TableExists takes a table name and returns true if the table exits,
+// false if it does not.
 func (db *Database) TableExists(tblName string) bool {
 	if db.tables[tblName] == nil {
 		return false
-	} else {
-		return true
 	}
+
+	return true
 }
 
+// DropTable takes a table name and deletes the associated json file.
 func (db *Database) DropTable(tblName string) error {
 	var err error
 
@@ -79,11 +90,12 @@ func (db *Database) DropTable(tblName string) error {
 	return nil
 }
 
+// CreateTable takes a table name and creates an associated json file.
 func (db *Database) CreateTable(tblName string) (*table, error) {
 	var err error
 
 	if db.TableExists(tblName) {
-		return nil, errors.New("Table already exists!")
+		return nil, errors.New("table already exists")
 	}
 
 	tbl := table{}
@@ -101,14 +113,16 @@ func (db *Database) CreateTable(tblName string) (*table, error) {
 	return db.tables[tblName], nil
 }
 
+// GetTable takes a table name and returns a reference to that table.
 func (db *Database) GetTable(tblName string) (*table, error) {
 	if !db.TableExists(tblName) {
-		return nil, errors.New("Table does not exist!")
+		return nil, errors.New("table does not exist")
 	}
 
 	return db.tables[tblName], nil
 }
 
+// Close closes all json files associated with the database.
 func (db *Database) Close() {
 	for _, tbl := range db.tables {
 		tbl.Lock()

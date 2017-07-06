@@ -3,6 +3,8 @@ package hare_test
 import "testing"
 
 func TestCreate(t *testing.T) {
+	var err error
+
 	foosTbl, err := db.CreateTable("foos")
 	if err != nil {
 		t.Error("TestCreate:", err)
@@ -15,8 +17,7 @@ func TestCreate(t *testing.T) {
 
 	foo := Foo{}
 
-	err = foosTbl.Find(id, &foo)
-	if err != nil {
+	if err = foosTbl.Find(id, &foo); err != nil {
 		t.Error("TestCreate:", err)
 	}
 
@@ -24,8 +25,7 @@ func TestCreate(t *testing.T) {
 		t.Error("TestCreate: Expected 'test', got ", foo.Bar)
 	}
 
-	err = db.DropTable("foos")
-	if err != nil {
+	if err = db.DropTable("foos"); err != nil {
 		t.Error("TestCreate:", err)
 	}
 }

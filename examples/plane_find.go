@@ -54,8 +54,7 @@ func main() {
 
 	fmt.Println("Finding ME-109...")
 
-	err = planesTbl.Find(2, &plane)
-	if err != nil {
+	if err = planesTbl.Find(2, &plane); err != nil {
 		panic(err)
 	}
 

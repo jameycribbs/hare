@@ -15,13 +15,6 @@ type Pilot struct {
 	Country    string `json:"country"`
 }
 
-func (pilot *Pilot) Populate(recMap map[string]interface{}) {
-	pilot.ID = int(recMap["id"].(float64))
-	pilot.Name = recMap["name"].(string)
-	pilot.Experience = recMap["name"].(string)
-	pilot.Country = recMap["name"].(string)
-}
-
 // Required method
 func (pilot *Pilot) SetID(id int) {
 	pilot.ID = id

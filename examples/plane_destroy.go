@@ -52,8 +52,7 @@ func main() {
 
 	fmt.Println("Deleting ME-109...")
 
-	err = planesTbl.Destroy(2)
-	if err != nil {
+	if err = planesTbl.Destroy(2); err != nil {
 		panic(err)
 	}
 

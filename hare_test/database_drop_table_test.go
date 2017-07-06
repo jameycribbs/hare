@@ -2,22 +2,22 @@ package hare_test
 
 import "testing"
 
-func TestDestroyTable(t *testing.T) {
-	_, err := db.CreateTable("foos")
-	if err != nil {
-		t.Error("TestDestroyTable:", err)
+func TestDropTable(t *testing.T) {
+	var err error
+
+	if _, err = db.CreateTable("foos"); err != nil {
+		t.Error("TestDropTable:", err)
 	}
 
 	if !db.TableExists("foos") {
-		t.Error("TestDestroyTable:", err)
+		t.Error("TestDropTable:", err)
 	}
 
-	err = db.DropTable("foos")
-	if err != nil {
-		t.Error("TestDestroyTable:", err)
+	if err = db.DropTable("foos"); err != nil {
+		t.Error("TestDropTable:", err)
 	}
 
 	if db.TableExists("foos") {
-		t.Error("TestDestroyTable:", err)
+		t.Error("TestDropTable:", err)
 	}
 }

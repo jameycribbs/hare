@@ -1,25 +1,35 @@
 package hare_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jameycribbs/hare"
+)
 
 func TestForEach(t *testing.T) {
+	var err error
+
 	foosTbl, err := db.CreateTable("foos")
 	if err != nil {
 		t.Error("TestCreate:", err)
 	}
 
-	_, err = foosTbl.Create(&Foo{Bar: "test"})
-	if err != nil {
+	if _, err = foosTbl.Create(&Foo{Bar: "test"}); err != nil {
 		t.Error("TestCreate:", err)
 	}
 
 	var foo1 Foo
 
-	err = foosTbl.ForEach(func(recMap map[string]interface{}) error {
-		foo2 := fooFromRecMap(recMap)
+	err = foosTbl.ForEachID(func(recID int) error {
+		var foo2 Foo
+
+		if err = foosTbl.Find(recID, &foo2); err != nil {
+			panic(err)
+		}
 
 		if foo2.Bar == "test" {
 			foo1 = foo2
+			return hare.ForEachIDBreak{}
 		}
 		return nil
 	})
@@ -28,8 +38,7 @@ func TestForEach(t *testing.T) {
 		t.Error("TestCreate: Expected 'test', got ", foo1.Bar)
 	}
 
-	err = db.DropTable("foos")
-	if err != nil {
+	if err = db.DropTable("foos"); err != nil {
 		t.Error("TestCreate:", err)
 	}
 }

@@ -19,11 +19,14 @@ type table struct {
 	index  map[int]int64
 }
 
+// Record defines an interface for setting and getting a record's ID.
 type Record interface {
 	SetID(int)
 	GetID() int
 }
 
+// DummiesTooShortError is a place to hold a custom error used
+// as part of a switch.
 type DummiesTooShortError struct {
 }
 
@@ -31,6 +34,8 @@ func (e DummiesTooShortError) Error() string {
 	return ""
 }
 
+// ForEachIDBreak is a place to hold a custom error used
+// as part of a switch.
 type ForEachIDBreak struct {
 }
 
@@ -38,6 +43,8 @@ func (e ForEachIDBreak) Error() string {
 	return ""
 }
 
+// Create takes a Record, adds that record to the table's json
+// file and returns record ID (int).
 func (tbl *table) Create(rec Record) (int, error) {
 	tbl.Lock()
 	defer tbl.Unlock()
@@ -88,6 +95,8 @@ func (tbl *table) Create(rec Record) (int, error) {
 	return recID, nil
 }
 
+// Destroy takes a record ID (int) and removes the
+// corresponding record from the table's json file.
 func (tbl *table) Destroy(recID int) error {
 	var err error
 
@@ -113,6 +122,8 @@ func (tbl *table) Destroy(recID int) error {
 	return nil
 }
 
+// Find takes a record ID (int) and a Record and populates that
+// record with data from the line in the json file with that ID.
 func (tbl *table) Find(recID int, rec Record) error {
 	tbl.RLock()
 	defer tbl.RUnlock()
@@ -138,6 +149,8 @@ func (tbl *table) Find(recID int, rec Record) error {
 	return err
 }
 
+// ForEachID takes a function, loops through all the record IDs in the table
+// and passes each ID to that function.
 func (tbl *table) ForEachID(f func(int) error) error {
 	for recID := range tbl.index {
 
@@ -156,6 +169,8 @@ func (tbl *table) ForEachID(f func(int) error) error {
 	return nil
 }
 
+// Update takes a Record and updates the corresponding line in the json file
+// with it's contents.
 func (tbl *table) Update(rec Record) error {
 	tbl.Lock()
 	defer tbl.Unlock()
@@ -191,7 +206,7 @@ func (tbl *table) Update(rec Record) error {
 
 		extraData := make([]byte, diff)
 
-		for i, _ := range extraData {
+		for i := range extraData {
 			if i == 0 {
 				extraData[i] = '\n'
 			} else {
@@ -257,7 +272,7 @@ func (tbl *table) Update(rec Record) error {
 //******************************************************************************
 
 func (tbl *table) incrementLastID() int {
-	tbl.lastID += 1
+	tbl.lastID++
 
 	return tbl.lastID
 }
@@ -321,14 +336,14 @@ func (tbl *table) initLastID() {
 }
 
 func (tbl *table) offsetToFitRec(recLengthNeeded int) (int64, error) {
+	var err error
+	var recLength int
 	var recOffset int64
 	var totalOffset int64
-	var recLength int
 
 	r := bufio.NewReader(tbl.filePtr)
 
-	_, err := tbl.filePtr.Seek(0, 0)
-	if err != nil {
+	if _, err = tbl.filePtr.Seek(0, 0); err != nil {
 		return 0, err
 	}
 
@@ -340,7 +355,7 @@ func (tbl *table) offsetToFitRec(recLengthNeeded int) (int64, error) {
 		totalOffset += int64(recLength)
 
 		// Need to account for newline character.
-		recLength -= 1
+		recLength--
 
 		if err == io.EOF {
 			break
@@ -366,12 +381,11 @@ func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
 	// Overwrite record with XXXXXXXX...
 	oldRecData := make([]byte, recLength-1)
 
-	for i, _ := range oldRecData {
+	for i := range oldRecData {
 		oldRecData[i] = 'X'
 	}
 
-	err = tbl.writeRec(recOffset, 0, oldRecData)
-	if err != nil {
+	if err = tbl.writeRec(recOffset, 0, oldRecData); err != nil {
 		return err
 	}
 
@@ -379,10 +393,11 @@ func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
 }
 
 func (tbl *table) readRec(offset int64) ([]byte, error) {
+	var err error
+
 	r := bufio.NewReader(tbl.filePtr)
 
-	_, err := tbl.filePtr.Seek(offset, 0)
-	if err != nil {
+	if _, err = tbl.filePtr.Seek(offset, 0); err != nil {
 		return nil, err
 	}
 
@@ -395,19 +410,18 @@ func (tbl *table) readRec(offset int64) ([]byte, error) {
 }
 
 func (tbl *table) writeRec(offset int64, whence int, rec []byte) error {
-	var rawRec []byte
 	var err error
+	var rawRec []byte
 
 	w := bufio.NewWriter(tbl.filePtr)
 
 	rawRec = append(rec, '\n')
 
-	_, err = tbl.filePtr.Seek(offset, whence)
-	if err != nil {
+	if _, err = tbl.filePtr.Seek(offset, whence); err != nil {
 		panic(err)
 	}
-	_, err = w.Write(rawRec)
-	if err != nil {
+
+	if _, err = w.Write(rawRec); err != nil {
 		panic(err)
 	}
 

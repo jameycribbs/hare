@@ -6,6 +6,8 @@ import (
 )
 
 func TestDestroy(t *testing.T) {
+	var err error
+
 	foosTbl, err := db.CreateTable("foos")
 	if err != nil {
 		t.Error("TestDestroy:", err)
@@ -16,15 +18,13 @@ func TestDestroy(t *testing.T) {
 		t.Error("TestDestroy:", err)
 	}
 
-	err = foosTbl.Destroy(id)
-	if err != nil {
+	if err = foosTbl.Destroy(id); err != nil {
 		t.Error("TestDestroy:", err)
 	}
 
 	foo := Foo{}
 
-	err = foosTbl.Find(id, &foo)
-	if err != nil {
+	if err = foosTbl.Find(id, &foo); err != nil {
 		if err.Error() != "Find Error: Record with ID of "+strconv.Itoa(id)+" does not exist!" {
 			t.Error("TestDestroy: Expected Find error, got ", err)
 		}
@@ -32,8 +32,7 @@ func TestDestroy(t *testing.T) {
 		t.Error("TestDestroy: Expected Find error, got no error.")
 	}
 
-	err = db.DropTable("foos")
-	if err != nil {
+	if err = db.DropTable("foos"); err != nil {
 		t.Error("TestDestroy:", err)
 	}
 }

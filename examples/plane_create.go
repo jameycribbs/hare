@@ -50,7 +50,14 @@ func main() {
 		panic(err)
 	}
 
-	id, err := planesTbl.Create(&Plane{Name: "FW-190", Speed: 389, Range: 555, EngineType: "radial", Country: "Germany", PlaneType: "fighter"})
+	id, err := planesTbl.Create(&Plane{
+		Name:       "FW-190",
+		Speed:      389,
+		Range:      555,
+		EngineType: "radial",
+		Country:    "Germany",
+		PlaneType:  "fighter",
+	})
 
 	if err != nil {
 		panic(err)
