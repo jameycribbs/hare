@@ -4,8 +4,8 @@ Hare - A nimble little database management system written in Go
 ====
 
 Hare is a pure Go database management system that stores each table as
-a text file of line-delimited JSON.  It is a good fit for applications
-that require a simple embedded DBMS.
+a text file of line-delimited JSON.  Each line of JSON represents a 
+record.  It is a good fit for applications that require a simple embedded DBMS.
 
 ## Table of Contents
 
@@ -13,7 +13,6 @@ that require a simple embedded DBMS.
   - [Installing](#installing)
   - [Usage](#usage)
 - [Features](#features)
-- [Limitations](#limitations)
 
 ## Getting Started
 
