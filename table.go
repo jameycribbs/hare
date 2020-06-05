@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/Knetic/govaluate"
 )
 
 const dummyRune = 'X'
@@ -31,15 +33,6 @@ type DummiesTooShortError struct {
 }
 
 func (e DummiesTooShortError) Error() string {
-	return ""
-}
-
-// ForEachIDBreak is a place to hold a custom error used
-// as part of a switch.
-type ForEachIDBreak struct {
-}
-
-func (e ForEachIDBreak) Error() string {
 	return ""
 }
 
@@ -122,51 +115,39 @@ func (tbl *table) Destroy(recID int) error {
 	return nil
 }
 
-// Find takes a record ID (int) and a Record and populates that
-// record with data from the line in the json file with that ID.
-func (tbl *table) Find(recID int, rec Record) error {
-	tbl.RLock()
-	defer tbl.RUnlock()
-
-	offset, ok := tbl.index[recID]
-	if !ok {
-		return errors.New("Find Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
-	}
-
-	rawRec, err := tbl.readRec(offset)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(rawRec, &rec); err != nil {
-		return err
-	}
-
-	if recID != rec.GetID() {
-		return errors.New("Find Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
-	}
-
-	return err
+// Find takes a record ID (int) and returns a map.
+func (tbl *table) Find(recID int) (map[string]interface{}, error) {
+	return tbl.findRaw(recID)
 }
 
-// ForEachID takes a function, loops through all the record IDs in the table
-// and passes each ID to that function.
-func (tbl *table) ForEachID(f func(int) error) error {
+func (tbl *table) Where(queryExpr string) ([]map[string]interface{}, error) {
+	var queryResult interface{}
+	var foundRecs []map[string]interface{}
+
+	expression, err := govaluate.NewEvaluableExpression(queryExpr)
+	if err != nil {
+		return foundRecs, err
+	}
+
 	for recID := range tbl.index {
+		var rec map[string]interface{}
 
-		err := f(recID)
+		rec, err = tbl.findRaw(recID)
+		if err != nil {
+			return foundRecs, err
+		}
 
-		switch err := err.(type) {
-		case nil:
-			continue
-		case ForEachIDBreak:
-			return nil
-		default:
-			return err
+		queryResult, err = expression.Evaluate(rec)
+		if err != nil {
+			return foundRecs, err
+		}
+
+		if queryResult.(bool) {
+			foundRecs = append(foundRecs, rec)
 		}
 	}
 
-	return nil
+	return foundRecs, err
 }
 
 // Update takes a Record and updates the corresponding line in the json file
@@ -277,6 +258,29 @@ func (tbl *table) incrementLastID() int {
 	return tbl.lastID
 }
 
+func (tbl *table) findRaw(recID int) (map[string]interface{}, error) {
+	var rec map[string]interface{}
+
+	tbl.RLock()
+	defer tbl.RUnlock()
+
+	offset, ok := tbl.index[recID]
+	if !ok {
+		return rec, errors.New("findRaw Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
+	}
+
+	rawRec, err := tbl.readRec(offset)
+	if err != nil {
+		return rec, err
+	}
+
+	if err := json.Unmarshal(rawRec, &rec); err != nil {
+		return rec, err
+	}
+
+	return rec, err
+}
+
 func (tbl *table) initIndex() error {
 	var recOffset int64
 	var totalOffset int64
@@ -307,7 +311,8 @@ func (tbl *table) initIndex() error {
 			return err
 		}
 
-		// If this is a record that has been deleted or is the result of an update that left extra data on the line, then skip this
+		// If this is a record that has been deleted or is the result of
+		// an update that left extra data on the line, then skip this
 		// dummy record.
 		if (rawRec[0] == '\n') || (rawRec[0] == dummyRune) {
 			continue
