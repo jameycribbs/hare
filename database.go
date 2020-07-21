@@ -17,7 +17,7 @@ const tblExt = ".json"
 // associated with the database.
 type Database struct {
 	path   string
-	tables map[string]*table
+	tables map[string]*Table
 }
 
 // OpenDB takes a directory path pointing to one or more json files and returns
@@ -28,14 +28,14 @@ func OpenDB(dbPath string) (*Database, error) {
 	db := new(Database)
 	db.path = dbPath
 
-	db.tables = make(map[string]*table)
+	db.tables = make(map[string]*Table)
 
 	files, _ := ioutil.ReadDir(db.path)
 
 	for _, file := range files {
 		if !file.IsDir() {
 			if file.Name() != "." && file.Name() != ".." {
-				tbl := table{}
+				tbl := Table{}
 
 				tbl.filePtr, err = os.OpenFile(db.path+"/"+file.Name(), os.O_RDWR, 0660)
 				if err != nil {
@@ -91,14 +91,14 @@ func (db *Database) DropTable(tblName string) error {
 }
 
 // CreateTable takes a table name and creates an associated json file.
-func (db *Database) CreateTable(tblName string) (*table, error) {
+func (db *Database) CreateTable(tblName string) (*Table, error) {
 	var err error
 
 	if db.TableExists(tblName) {
 		return nil, errors.New("table already exists")
 	}
 
-	tbl := table{}
+	tbl := Table{}
 
 	tbl.filePtr, err = os.OpenFile(db.path+"/"+tblName+tblExt, os.O_CREATE|os.O_RDWR, 0660)
 	if err != nil {
@@ -109,15 +109,6 @@ func (db *Database) CreateTable(tblName string) (*table, error) {
 	tbl.initLastID()
 
 	db.tables[tblName] = &tbl
-
-	return db.tables[tblName], nil
-}
-
-// GetTable takes a table name and returns a reference to that table.
-func (db *Database) GetTable(tblName string) (*table, error) {
-	if !db.TableExists(tblName) {
-		return nil, errors.New("table does not exist")
-	}
 
 	return db.tables[tblName], nil
 }
@@ -133,4 +124,12 @@ func (db *Database) Close() {
 
 		tbl.Unlock()
 	}
+}
+
+func (db *Database) GetTable(tblName string) (*Table, error) {
+	if !db.TableExists(tblName) {
+		return nil, errors.New("table does not exist")
+	}
+
+	return db.tables[tblName], nil
 }

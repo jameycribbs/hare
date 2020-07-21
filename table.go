@@ -8,37 +8,60 @@ import (
 	"os"
 	"strconv"
 	"sync"
-
-	"github.com/Knetic/govaluate"
 )
 
 const dummyRune = 'X'
 
-type table struct {
+type Table struct {
 	filePtr *os.File
 	sync.RWMutex
 	lastID int
 	index  map[int]int64
 }
 
-// Record defines an interface for setting and getting a record's ID.
 type Record interface {
 	SetID(int)
 	GetID() int
+	AfterFind()
 }
 
-// DummiesTooShortError is a place to hold a custom error used
-// as part of a switch.
-type DummiesTooShortError struct {
+func (tbl *Table) IDs() []int {
+	keys := make([]int, len(tbl.index))
+
+	i := 0
+	for k := range tbl.index {
+		keys[i] = k
+		i++
+	}
+
+	return keys
 }
 
-func (e DummiesTooShortError) Error() string {
-	return ""
+func (tbl *Table) Find(id int, rec Record) error {
+	tbl.RLock()
+	defer tbl.RUnlock()
+
+	offset, ok := tbl.index[id]
+	if !ok {
+		return errors.New("Find Error: Record with ID of " + strconv.Itoa(id) + " does not exist!")
+	}
+
+	rawRec, err := tbl.readRec(offset)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(rawRec, rec)
+	if err != nil {
+		return err
+	}
+
+	rec.AfterFind()
+
+	return nil
 }
 
-// Create takes a Record, adds that record to the table's json
-// file and returns record ID (int).
-func (tbl *table) Create(rec Record) (int, error) {
+func (tbl *Table) Create(rec Record) (int, error) {
 	tbl.Lock()
 	defer tbl.Unlock()
 
@@ -90,7 +113,7 @@ func (tbl *table) Create(rec Record) (int, error) {
 
 // Destroy takes a record ID (int) and removes the
 // corresponding record from the table's json file.
-func (tbl *table) Destroy(recID int) error {
+func (tbl *Table) Destroy(recID int) error {
 	var err error
 
 	tbl.Lock()
@@ -115,44 +138,9 @@ func (tbl *table) Destroy(recID int) error {
 	return nil
 }
 
-// Find takes a record ID (int) and returns a map.
-func (tbl *table) Find(recID int) (map[string]interface{}, error) {
-	return tbl.findRaw(recID)
-}
-
-func (tbl *table) Where(queryExpr string) ([]map[string]interface{}, error) {
-	var queryResult interface{}
-	var foundRecs []map[string]interface{}
-
-	expression, err := govaluate.NewEvaluableExpression(queryExpr)
-	if err != nil {
-		return foundRecs, err
-	}
-
-	for recID := range tbl.index {
-		var rec map[string]interface{}
-
-		rec, err = tbl.findRaw(recID)
-		if err != nil {
-			return foundRecs, err
-		}
-
-		queryResult, err = expression.Evaluate(rec)
-		if err != nil {
-			return foundRecs, err
-		}
-
-		if queryResult.(bool) {
-			foundRecs = append(foundRecs, rec)
-		}
-	}
-
-	return foundRecs, err
-}
-
 // Update takes a Record and updates the corresponding line in the json file
 // with it's contents.
-func (tbl *table) Update(rec Record) error {
+func (tbl *Table) Update(rec Record) error {
 	tbl.Lock()
 	defer tbl.Unlock()
 
@@ -252,36 +240,13 @@ func (tbl *table) Update(rec Record) error {
 // PRIVATE METHODS
 //******************************************************************************
 
-func (tbl *table) incrementLastID() int {
+func (tbl *Table) incrementLastID() int {
 	tbl.lastID++
 
 	return tbl.lastID
 }
 
-func (tbl *table) findRaw(recID int) (map[string]interface{}, error) {
-	var rec map[string]interface{}
-
-	tbl.RLock()
-	defer tbl.RUnlock()
-
-	offset, ok := tbl.index[recID]
-	if !ok {
-		return rec, errors.New("findRaw Error: Record with ID of " + strconv.Itoa(recID) + " does not exist!")
-	}
-
-	rawRec, err := tbl.readRec(offset)
-	if err != nil {
-		return rec, err
-	}
-
-	if err := json.Unmarshal(rawRec, &rec); err != nil {
-		return rec, err
-	}
-
-	return rec, err
-}
-
-func (tbl *table) initIndex() error {
+func (tbl *Table) initIndex() error {
 	var recOffset int64
 	var totalOffset int64
 	var recLength int
@@ -330,7 +295,7 @@ func (tbl *table) initIndex() error {
 	return nil
 }
 
-func (tbl *table) initLastID() {
+func (tbl *Table) initLastID() {
 	tbl.lastID = 0
 
 	for k := range tbl.index {
@@ -340,7 +305,7 @@ func (tbl *table) initLastID() {
 	}
 }
 
-func (tbl *table) offsetToFitRec(recLengthNeeded int) (int64, error) {
+func (tbl *Table) offsetToFitRec(recLengthNeeded int) (int64, error) {
 	var err error
 	var recLength int
 	var recOffset int64
@@ -380,7 +345,7 @@ func (tbl *table) offsetToFitRec(recLengthNeeded int) (int64, error) {
 	return 0, DummiesTooShortError{}
 }
 
-func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
+func (tbl *Table) overwriteRec(recOffset int64, recLength int) error {
 	var err error
 
 	// Overwrite record with XXXXXXXX...
@@ -397,7 +362,7 @@ func (tbl *table) overwriteRec(recOffset int64, recLength int) error {
 	return nil
 }
 
-func (tbl *table) readRec(offset int64) ([]byte, error) {
+func (tbl *Table) readRec(offset int64) ([]byte, error) {
 	var err error
 
 	r := bufio.NewReader(tbl.filePtr)
@@ -414,7 +379,7 @@ func (tbl *table) readRec(offset int64) ([]byte, error) {
 	return rawRec, err
 }
 
-func (tbl *table) writeRec(offset int64, whence int, rec []byte) error {
+func (tbl *Table) writeRec(offset int64, whence int, rec []byte) error {
 	var err error
 	var rawRec []byte
 
@@ -433,4 +398,13 @@ func (tbl *table) writeRec(offset int64, whence int, rec []byte) error {
 	w.Flush()
 
 	return nil
+}
+
+// DummiesTooShortError is a place to hold a custom error used
+// as part of a switch.
+type DummiesTooShortError struct {
+}
+
+func (e DummiesTooShortError) Error() string {
+	return ""
 }
