@@ -16,6 +16,13 @@ record.  It is a good fit for applications that require a simple embedded DBMS.
 
 ## Getting Started
 
+## IMPORTANT!!!!!!!!!
+
+The documentation on this page is completely obsolete!!!
+
+I have finally settled on what I believe to be the final api for Hare
+and I need to update all of the documentation.
+
 ### Installing
 
 To start using Hare, install Go and run `go get`:
