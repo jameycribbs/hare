@@ -1,4 +1,5 @@
 ![alt tag](https://raw.githubusercontent.com/jameycribbs/hare/master/hare.jpg)
+<img src="https://raw.githubusercontent.com/jameycribbs/hare/master/hare.jpg" width="200" />
 
 Hare - A nimble little database management system written in Go
 ====
