@@ -82,7 +82,7 @@ func (db *Database) CreateTable(tblName string) (*Table, error) {
 		return nil, errors.New("table already exists")
 	}
 
-	tbl, err := openTable(tblName+tblExt, true)
+	tbl, err := openTable(db.path+"/"+tblName+tblExt, true)
 	if err != nil {
 		return nil, err
 	}

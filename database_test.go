@@ -4,98 +4,114 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	deleteTestFiles()
-	copyTestFiles()
+func TestAllDatabaseTests(t *testing.T) {
+	var tests = []func(t *testing.T){
+		func(t *testing.T) {
+			//OpenDB...
 
-	os.Exit(m.Run())
+			db := openTestDB()
+			defer db.Close()
 
-	deleteTestFiles()
-}
+			if reflect.TypeOf(db) != reflect.TypeOf(&Database{}) {
+				t.Errorf("want %v; got %v", reflect.TypeOf(&Database{}), reflect.TypeOf(db))
+			}
+		},
+		func(t *testing.T) {
+			//Close...
 
-func TestOpenDB(t *testing.T) {
-	db := openTestDB()
-	defer db.Close()
+			db := openTestDB()
+			db.Close()
 
-	if reflect.TypeOf(db) != reflect.TypeOf(&Database{}) {
-		t.Errorf("want %v; got %v", reflect.TypeOf(&Database{}), reflect.TypeOf(db))
+			if db.TableExists("test") {
+				t.Errorf("want %v; got %v", false, true)
+			}
+		},
+		func(t *testing.T) {
+			//TableExists...
+
+			db := openTestDB()
+			defer db.Close()
+
+			if !db.TableExists("test") {
+				t.Errorf("want %v; got %v", true, false)
+			}
+
+			if db.TableExists("does_not_exist") {
+				t.Errorf("want %v; got %v", true, false)
+			}
+		},
+		func(t *testing.T) {
+			//GetTable...
+
+			db := openTestDB()
+			defer db.Close()
+
+			tbl, err := db.GetTable("test")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if reflect.TypeOf(tbl) != reflect.TypeOf(&Table{}) {
+				t.Errorf("want %v; got %v", reflect.TypeOf(&Table{}), reflect.TypeOf(tbl))
+			}
+		},
+		func(t *testing.T) {
+			//CreateTable...
+
+			db := openTestDB()
+			defer db.Close()
+
+			tbl, err := db.CreateTable("new_table")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if reflect.TypeOf(tbl) != reflect.TypeOf(&Table{}) {
+				t.Errorf("want %v; got %v", reflect.TypeOf(&Table{}), reflect.TypeOf(tbl))
+			}
+
+			if !db.TableExists("new_table") {
+				t.Errorf("want %v; got %v", true, false)
+			}
+
+			if _, err := os.Stat("test_data/new_table.json"); err != nil {
+				t.Errorf("want %v; got %v", nil, err)
+			}
+		},
+		func(t *testing.T) {
+			//DropTable...
+
+			db := openTestDB()
+			defer db.Close()
+
+			if !db.TableExists("deletable_table") {
+				t.Errorf("want %v; got %v", true, false)
+			}
+
+			err := db.DropTable("deletable_table")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if db.TableExists("deletable_table") {
+				t.Errorf("want %v; got %v", true, false)
+			}
+
+			if _, err := os.Stat("test_data/deletable.json"); err == nil {
+				t.Errorf("want %v; got %v", "stat test_data/deletable_table.json: no such file or directory", nil)
+			}
+		},
 	}
-}
 
-func TestCloseDB(t *testing.T) {
-	db := openTestDB()
-	db.Close()
-
-	if db.TableExists("test") {
-		t.Errorf("want %v; got %v", false, true)
+	for i, fn := range tests {
+		databaseTestSetup()
+		t.Run(strconv.Itoa(i), fn)
+		databaseTestTeardown()
 	}
-}
-
-func TestTableExists(t *testing.T) {
-	db := openTestDB()
-	defer db.Close()
-
-	if !db.TableExists("test") {
-		t.Errorf("want %v; got %v", true, false)
-	}
-
-	if db.TableExists("does_not_exist") {
-		t.Errorf("want %v; got %v", true, false)
-	}
-}
-
-func TestGetTable(t *testing.T) {
-	db := openTestDB()
-	defer db.Close()
-
-	tbl, err := db.GetTable("test")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if reflect.TypeOf(tbl) != reflect.TypeOf(&Table{}) {
-		t.Errorf("want %v; got %v", reflect.TypeOf(&Table{}), reflect.TypeOf(tbl))
-	}
-}
-
-func TestCreateTable(t *testing.T) {
-	db := openTestDB()
-	defer db.Close()
-
-	tbl, err := db.CreateTable("new_table")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if reflect.TypeOf(tbl) != reflect.TypeOf(&Table{}) {
-		t.Errorf("want %v; got %v", reflect.TypeOf(&Table{}), reflect.TypeOf(tbl))
-	}
-
-	if !db.TableExists("new_table") {
-		t.Errorf("want %v; got %v", true, false)
-	}
-}
-
-func TestDropTable(t *testing.T) {
-	db := openTestDB()
-	defer db.Close()
-
-	if !db.TableExists("deletable_table") {
-		t.Errorf("want %v; got %v", true, false)
-	}
-
-	err := db.DropTable("deletable_table")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if db.TableExists("deletable_table") {
-		t.Errorf("want %v; got %v", true, false)
-	}
-
 }
 
 func openTestDB() *Database {
@@ -107,7 +123,16 @@ func openTestDB() *Database {
 	return db
 }
 
-func deleteTestFiles() {
+func databaseTestSetup() {
+	deleteDatabaseTestFiles()
+	copyDatabaseTestFiles()
+}
+
+func databaseTestTeardown() {
+	deleteDatabaseTestFiles()
+}
+
+func deleteDatabaseTestFiles() {
 	filesToDelete := []string{
 		"test_data/test.json",
 		"test_data/new_table.json",
@@ -123,7 +148,7 @@ func deleteTestFiles() {
 	}
 }
 
-func copyTestFiles() {
+func copyDatabaseTestFiles() {
 	var cmds []*exec.Cmd
 
 	cmds = append(cmds, exec.Command("cp", "test_data/test_default.json", "test_data/test.json"))
