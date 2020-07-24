@@ -16,13 +16,6 @@ record.  It is a good fit for applications that require a simple embedded DBMS.
 
 ## Getting Started
 
-## IMPORTANT!!!!!!!!!
-
-The documentation on this page is completely obsolete!!!
-
-I have finally settled on what I believe to be the final api for Hare
-and I need to update all of the documentation.
-
 ### Installing
 
 To start using Hare, install Go and run `go get`:
@@ -39,61 +32,53 @@ your disk.
 To open your database, simply use the `hare.OpenDB()` function:
 
 ```go
-package main
-
-import (
-  "log"
-
-  "github.com/jameycribbs/hare"
-)
-
-func main() {
-  // OpenDB takes a directory path pointing to zero or more json files and returns
-  // a database connection.
-  db, err := hare.OpenDB("data")
-  if err != nil {
-    log.Fatal(err)
-  }
-  defer db.Close()
-
+// OpenDB takes a directory path containing zero or more json files and returns
+// a database connection.
+db, err := hare.OpenDB("data")
+if err != nil {
   ...
 }
+defer db.Close()
+
+  ...
 ```
 
 #### Creating a table
 
 To create a table (represented as a json file), you can use the
-Database.CreateTable() method:
+Database.CreateTable() method.  This will return a handle to the
+newly created table:
 
 ```go
 contactsTbl, err := db.CreateTable("contacts")
-if err != nil {
-  log.Fatal(err)
-}
 ```
 
 #### Using a table
 
 To use a table for database operations, you need to create a
-structure representing the table columns, and create two methods 
-on that structure:
+structure representing the table columns, and create three
+methods on that structure:
 
 ```go
-type Contact struct {
-  // Required field
-  ID         int    `json:"id"`
-  FirstName  string `json:"firstname"`
-  LastName   string `json:"lastname"`
-  Phone      string `json:"phone"`
-  Age        int    `json:"age"`
+type contact struct {
+  // id is a required field
+  id         int    `json:"id"`
+  firstName  string `json:"firstname"`
+  lastName   string `json:"lastname"`
+  phone      string `json:"phone"`
+  age        int    `json:"age"`
 }
 
-func (contact *Contact) SetID(id int) {
-  contact.ID = id
+func (c *contact) SetID(id int) {
+  c.id = id
 }
 
-func (contact *Contact) GetID() int {
-  return contact.ID
+func (c *contact) GetID() int {
+  return c.id
+}
+
+func (c *contact) AfterFind() {
+  *c = contact(*c)
 }
 ```
 
@@ -102,7 +87,7 @@ func (contact *Contact) GetID() int {
 To add a record, you can use the Table.Create() method:
 
 ```go
-recID, err := contactsTbl.Create(&Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
+recID, err := contactsTbl.Create(&contact{firstName: "John", lastName: "Doe", phone: "888-888-8888", age: 21})
 ```
 
 
@@ -111,38 +96,63 @@ recID, err := contactsTbl.Create(&Contact{FirstName: "John", LastName: "Doe", Ph
 To find a record if you know the record ID, you can use the Table.Find() method:
 
 ```go
-var contact Contact
+var contact contact
 
 err = contactsTbl.Find(recID, &contact)
-if err != nil {
-  log.Fatal(err)
-}
 ```
 
 
-#### Searching records
+#### Querying a table
 
-To search for a record by any field, you can use the Table.ForEachID() method
-by passing it a function that defines your query:
+To query a table, you need to create a struct with the
+table handle embedded and write one method for it that
+will be the query method:
 
 ```go
-err = contactsTbl.ForEachID(func(recID int) error {
-  var contact Contact
+type model struct {
+	*hare.Table
+}
 
-  if err = contactsTbl.Find(recID, &contact); err != nil {
-    log.Fatal(err)
-  }
+func (mdl *model) query(queryFn func(rec record) bool, limit int) ([]record, error) {
+	var results []record
+	var err error
 
-  if contact.FirstName == "John" && contact.LastName == "Doe" {
-    fmt.Println("Contact record for John Doe:", contact)
-    return hare.ForEachIDBreak{}
-  }
-  return nil
-})
-if err != nil {
-  log.Fatal(err)
+	for _, id := range mdl.Table.IDs() {
+		r := record{}
+
+		err = mdl.Table.Find(id, &r)
+		if err != nil {
+			panic(err)
+		}
+
+		if queryFn(r) {
+			results = append(results, r)
+		}
+
+		if limit != 0 && limit == len(results) {
+			break
+		}
+	}
+
+	return results, err
 }
 ```
+
+Then you just need to create an instance of the model struct,
+and set the embedded hare.Table to the table handle you have.
+Now you are ready to start querying:
+
+```go
+mdl := model{Table: contactsTbl}
+
+results, err := mdl.query(func(r record) bool {
+  return r.firstname == "Bob" && r.lastname == "Jones"
+}, 0)
+```
+
+Notice how the actual query logic is an anonymous function?
+This allows you to use the full power of Go in your query
+expression.
 
 
 #### Updating a record
@@ -150,18 +160,9 @@ if err != nil {
 To add a record, you can use the Table.Update() method:
 
 ```go
-var contact Contact
+contact.age = 22
 
-err = contactsTbl.Find(recID, &contact)
-if err != nil {
-  log.Fatal(err)
-}
-
-contact.Age = 22
-
-if err = contactsTbl.Update(&contact); err != nil {
-  log.Fatal(err)
-}
+err = contactsTbl.Update(&contact)
 ```
 
 
@@ -170,9 +171,7 @@ if err = contactsTbl.Update(&contact); err != nil {
 To delete a record, you can use the Table.Destroy() method:
 
 ```go
-if err = contactsTbl.Destroy(recID); err != nil {
-  log.Fatal(err)
-}
+err = contactsTbl.Destroy(3)
 ```
 
 
@@ -181,9 +180,7 @@ if err = contactsTbl.Destroy(recID); err != nil {
 To delete a table you can use the Database.DropTable() method:
 
 ```go
-if err = db.DropTable("contacts"); err != nil {
-  log.Fatal(err)
-}
+err = db.DropTable("contacts")
 ```
 
 
@@ -195,3 +192,7 @@ if err = db.DropTable("contacts"); err != nil {
   or one writer for that table at one time, as long as all processes 
   share the same Database connection.
 
+* Querying is done using Go itself.  No need to use a DSL.
+
+* The database is not read into memory, but is queried from disk, so
+  no need to worry about a large dataset filling up memory.
