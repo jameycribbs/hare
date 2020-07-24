@@ -164,34 +164,6 @@ func main() {
 
 	fmt.Println("Newly updated record:", rec)
 
-	rec = record{
-		Season:           3,
-		Episode:          10,
-		Film:             "Bloodlust",
-		YearFilmReleased: 1966,
-		DateEpisodeAired: time.Date(1994, 12, 17, 0, 0, 0, 0, time.UTC),
-		Host:             "Joel",
-	}
-
-	recID, err = mdl.Table.Create(&rec)
-	if err != nil {
-		panic(err)
-	}
-
-	err = mdl.Table.Find(5, &rec)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Should be Cuba final cut:", rec)
-
-	err = mdl.Table.Find(6, &rec)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Should be Bloodlust:", rec)
-
 	//
 	// Here is how to delete a record.
 	//
