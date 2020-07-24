@@ -86,7 +86,7 @@ func main() {
 	}
 
 	//
-	// Now we will query the database for episodes that Joel hosted.
+	// Now we will run a query for episodes that Joel hosted.
 	//
 	results, err := mdl.query(func(r record) bool {
 		return r.Host == "Joel"
@@ -201,7 +201,7 @@ func main() {
 	}
 
 	err = mdl.Table.Find(2, &rec)
-	if err != nil {
+	if err == nil {
 		panic(err)
 	}
 

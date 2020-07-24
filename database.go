@@ -21,52 +21,79 @@ type Database struct {
 }
 
 // OpenDB takes a directory path pointing to one or more json files and returns
-// a database connection.
+// a pointer to a Database struct.
 func OpenDB(dbPath string) (*Database, error) {
-	var err error
-
 	db := new(Database)
-	db.path = dbPath
 
+	db.path = dbPath
 	db.tables = make(map[string]*Table)
 
-	files, _ := ioutil.ReadDir(db.path)
+	files, err := ioutil.ReadDir(db.path)
+	if err != nil {
+		return nil, err
+	}
 
+	// Loop through all json files in database directory, initialize them,
+	// and register them in the database.
 	for _, file := range files {
-		if !file.IsDir() {
-			if file.Name() != "." && file.Name() != ".." {
-				tbl := Table{}
+		filename := file.Name()
 
-				tbl.filePtr, err = os.OpenFile(db.path+"/"+file.Name(), os.O_RDWR, 0660)
-				if err != nil {
-					return nil, err
-				}
-
-				tbl.initIndex()
-				tbl.initLastID()
-
-				db.tables[strings.TrimSuffix(file.Name(), tblExt)] = &tbl
-			}
+		// If entry is sub dir, current dir, or parent dir, skip it.
+		if file.IsDir() || filename == "." || filename == ".." {
+			continue
 		}
+
+		if !strings.HasSuffix(filename, tblExt) {
+			continue
+		}
+
+		tbl, err := openTable(db.path+"/"+filename, false)
+		if err != nil {
+			return nil, err
+		}
+
+		db.tables[strings.TrimSuffix(filename, tblExt)] = tbl
 	}
 
 	return db, nil
 }
 
-// TableExists takes a table name and returns true if the table exits,
-// false if it does not.
-func (db *Database) TableExists(tblName string) bool {
-	if db.tables[tblName] == nil {
-		return false
+// Close closes all files associated with the database.
+func (db *Database) Close() error {
+	for _, tbl := range db.tables {
+		tbl.Lock()
+
+		if err := tbl.filePtr.Close(); err != nil {
+			return err
+		}
+
+		tbl.Unlock()
 	}
 
-	return true
+	db.path = ""
+	db.tables = nil
+
+	return nil
+}
+
+// CreateTable takes a table name and returns a pointer to a Table struct.
+func (db *Database) CreateTable(tblName string) (*Table, error) {
+	if db.TableExists(tblName) {
+		return nil, errors.New("table already exists")
+	}
+
+	tbl, err := openTable(tblName+tblExt, true)
+	if err != nil {
+		return nil, err
+	}
+
+	db.tables[tblName] = tbl
+
+	return db.tables[tblName], nil
 }
 
 // DropTable takes a table name and deletes the associated json file.
 func (db *Database) DropTable(tblName string) error {
-	var err error
-
 	tbl, err := db.GetTable(tblName)
 	if err != nil {
 		return err
@@ -90,46 +117,19 @@ func (db *Database) DropTable(tblName string) error {
 	return nil
 }
 
-// CreateTable takes a table name and creates an associated json file.
-func (db *Database) CreateTable(tblName string) (*Table, error) {
-	var err error
-
-	if db.TableExists(tblName) {
-		return nil, errors.New("table already exists")
-	}
-
-	tbl := Table{}
-
-	tbl.filePtr, err = os.OpenFile(db.path+"/"+tblName+tblExt, os.O_CREATE|os.O_RDWR, 0660)
-	if err != nil {
-		return nil, err
-	}
-
-	tbl.initIndex()
-	tbl.initLastID()
-
-	db.tables[tblName] = &tbl
-
-	return db.tables[tblName], nil
-}
-
-// Close closes all json files associated with the database.
-func (db *Database) Close() {
-	for _, tbl := range db.tables {
-		tbl.Lock()
-
-		if err := tbl.filePtr.Close(); err != nil {
-			panic(err)
-		}
-
-		tbl.Unlock()
-	}
-}
-
 func (db *Database) GetTable(tblName string) (*Table, error) {
-	if !db.TableExists(tblName) {
+	tbl, ok := db.tables[tblName]
+	if !ok {
 		return nil, errors.New("table does not exist")
 	}
 
-	return db.tables[tblName], nil
+	return tbl, nil
+}
+
+// TableExists takes a table name and returns true if the table exists,
+// false if it does not.
+func (db *Database) TableExists(tblName string) bool {
+	_, ok := db.tables[tblName]
+
+	return ok
 }

@@ -12,6 +12,12 @@ import (
 
 const dummyRune = 'X'
 
+type Record interface {
+	SetID(int)
+	GetID() int
+	AfterFind()
+}
+
 type Table struct {
 	filePtr *os.File
 	sync.RWMutex
@@ -19,10 +25,25 @@ type Table struct {
 	index  map[int]int64
 }
 
-type Record interface {
-	SetID(int)
-	GetID() int
-	AfterFind()
+func openTable(filePath string, includeCreatePerm bool) (*Table, error) {
+	var err error
+
+	tbl := new(Table)
+	perm := os.O_RDWR
+
+	if includeCreatePerm {
+		perm = os.O_CREATE | os.O_RDWR
+	}
+
+	tbl.filePtr, err = os.OpenFile(filePath, perm, 0660)
+	if err != nil {
+		return nil, err
+	}
+
+	tbl.initIndex()
+	tbl.initLastID()
+
+	return tbl, nil
 }
 
 func (tbl *Table) IDs() []int {
