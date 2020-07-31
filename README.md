@@ -39,42 +39,31 @@ if err != nil {
   ...
 }
 defer db.Close()
-
-  ...
-```
-
-#### Creating a table
-
-To create a table (represented as a json file), you can use the
-Database.CreateTable() method.  This will return a handle to the
-newly created table:
-
-```go
-contactsTbl, err := db.CreateTable("contacts")
+...
 ```
 
 #### Using a table
 
-To use a table for database operations, you need to create a
-structure representing the table columns, and create three
-methods on that structure:
+First, you need to create a struct representing the
+table's schema and then create 3 methods to satisy
+the hare.Record interface:
 
 ```go
 type contact struct {
-  // id is a required field
-  id         int    `json:"id"`
-  firstName  string `json:"firstname"`
-  lastName   string `json:"lastname"`
-  phone      string `json:"phone"`
-  age        int    `json:"age"`
+  // ID is a required field
+  ID         int    `json:"id"`
+  FirstName  string `json:"firstname"`
+  LastName   string `json:"lastname"`
+  Phone      string `json:"phone"`
+  Age        int    `json:"age"`
 }
 
 func (c *contact) SetID(id int) {
-  c.id = id
+  c.ID = id
 }
 
 func (c *contact) GetID() int {
-  return c.id
+  return c.ID
 }
 
 func (c *contact) AfterFind() {
@@ -87,7 +76,7 @@ func (c *contact) AfterFind() {
 To add a record, you can use the Table.Create() method:
 
 ```go
-recID, err := contactsTbl.Create(&contact{firstName: "John", lastName: "Doe", phone: "888-888-8888", age: 21})
+recID, err := contactsTbl.Create(&contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
 ```
 
 
@@ -96,9 +85,28 @@ recID, err := contactsTbl.Create(&contact{firstName: "John", lastName: "Doe", ph
 To find a record if you know the record ID, you can use the Table.Find() method:
 
 ```go
-var contact contact
+var c contact
 
-err = contactsTbl.Find(recID, &contact)
+err = contactsTbl.Find(1, &c)
+```
+
+#### Updating a record
+
+To update a record, you can use the Table.Update() method:
+
+```go
+c.Age = 22
+
+err = contactsTbl.Update(&c)
+```
+
+
+#### Deleting a record
+
+To delete a record, you can use the Table.Destroy() method:
+
+```go
+err = contactsTbl.Destroy(3)
 ```
 
 
@@ -109,24 +117,23 @@ table handle embedded and write one method for it that
 will be the query method:
 
 ```go
-type model struct {
+type contactsModel struct {
 	*hare.Table
 }
 
-func (mdl *model) query(queryFn func(rec record) bool, limit int) ([]record, error) {
-	var results []record
+func (mdl *contactsModel) query(queryFn func(rec contact) bool, limit int) ([]contact, error) {
+	var results []contact
 	var err error
 
 	for _, id := range mdl.Table.IDs() {
-		r := record{}
+		rec := contact{}
 
-		err = mdl.Table.Find(id, &r)
-		if err != nil {
-			panic(err)
+		if err = mdl.Table.Find(id, &rec); err != nil {
+			return nil, err
 		}
 
-		if queryFn(r) {
-			results = append(results, r)
+		if queryFn(rec) {
+			results = append(results, rec)
 		}
 
 		if limit != 0 && limit == len(results) {
@@ -143,10 +150,10 @@ and set the embedded hare.Table to the table handle you have.
 Now you are ready to start querying:
 
 ```go
-mdl := model{Table: contactsTbl}
+contactsMdl := model{Table: contactsTbl}
 
-results, err := mdl.query(func(r record) bool {
-  return r.firstname == "Bob" && r.lastname == "Jones"
+results, err := contactsMdl.query(func(c contact) bool {
+  return c.firstname == "John" && c.lastname == "Doe"
 }, 0)
 ```
 
@@ -155,32 +162,23 @@ This allows you to use the full power of Go in your query
 expression.
 
 
-#### Updating a record
 
-To add a record, you can use the Table.Update() method:
+#### Creating a table
 
-```go
-contact.age = 22
-
-err = contactsTbl.Update(&contact)
-```
-
-
-#### Deleting a record
-
-To delete a record, you can use the Table.Destroy() method:
+To create a new table (represented as a json file), you can use the
+Database.CreateTable() method.  This will return a handle to the
+newly created table:
 
 ```go
-err = contactsTbl.Destroy(3)
+budgetTbl, err := db.CreateTable("budget")
 ```
-
 
 #### Droping a table
 
 To delete a table you can use the Database.DropTable() method:
 
 ```go
-err = db.DropTable("contacts")
+err = db.DropTable("budget")
 ```
 
 

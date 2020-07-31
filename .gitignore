@@ -1,2 +1,3 @@
-examples/data/mst3k_episodes.json
+examples/example_data/mst3k_episodes.json
+examples/example_data/mst3k_episodes.old
 test_data/test.json
