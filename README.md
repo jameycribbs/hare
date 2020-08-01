@@ -44,142 +44,83 @@ defer db.Close()
 
 #### Using a table
 
-First, you need to create a struct representing the
-table's schema and then create 3 methods to satisy
-the hare.Record interface:
+Each json file is represented by a hare.Table.  To set things up, you need to
+create a struct with an embedded pointer to a hare.Table and add a Query method
+to it.  Additionally, you need to create a struct for a table's record and
+implement 3 simple boilerplate methods that allow it to satisfy the hare.Record
+interface. You can find an example of the needed structs and methods in the
+examples/crud/models/episodes.go file.
 
+Once that needed structs and methods are written, you just need to create an
+instance of the model struct and set it's embedded hare.Table struct pointer
+to a handle you get from Hare by calling the hare.GetTable database method.
 ```go
-type contact struct {
-  // ID is a required field
-  ID         int    `json:"id"`
-  FirstName  string `json:"firstname"`
-  LastName   string `json:"lastname"`
-  Phone      string `json:"phone"`
-  Age        int    `json:"age"`
-}
+var contacts models.Contacts
 
-func (c *contact) SetID(id int) {
-  c.ID = id
-}
-
-func (c *contact) GetID() int {
-  return c.ID
-}
-
-func (c *contact) AfterFind() {
-  *c = contact(*c)
+contacts.Table, err = db.GetTable("contacts")
+if err != nil {
+	panic(err)
 }
 ```
 
+Now you are ready to go!
+
 #### Creating a record
 
-To add a record, you can use the Table.Create() method:
+To add a record, you can use the Create() method:
 
 ```go
-recID, err := contactsTbl.Create(&contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
+recID, err := contacts.Create(&contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
 ```
 
 
 #### Finding a record
 
-To find a record if you know the record ID, you can use the Table.Find() method:
+To find a record if you know the record ID, you can use the Find() method:
 
 ```go
 var c contact
 
-err = contactsTbl.Find(1, &c)
+err = contacts.Find(1, &c)
 ```
 
 #### Updating a record
 
-To update a record, you can use the Table.Update() method:
+To update a record, you can use the Update() method:
 
 ```go
 c.Age = 22
 
-err = contactsTbl.Update(&c)
+err = contacts.Update(&c)
 ```
 
 
 #### Deleting a record
 
-To delete a record, you can use the Table.Destroy() method:
+To delete a record, you can use the Destroy() method:
 
 ```go
-err = contactsTbl.Destroy(3)
+err = contacts.Destroy(3)
 ```
 
 
 #### Querying a table
 
-To query a table, you need to create a struct with the
-table handle embedded and write one method for it that
-will be the query method:
+To query the database, you can write your query in pure Go and pass it to your
+model's Query method as a closure.
 
 ```go
-type contactsModel struct {
-	*hare.Table
-}
-
-func (mdl *contactsModel) query(queryFn func(rec contact) bool, limit int) ([]contact, error) {
-	var results []contact
-	var err error
-
-	for _, id := range mdl.Table.IDs() {
-		rec := contact{}
-
-		if err = mdl.Table.Find(id, &rec); err != nil {
-			return nil, err
-		}
-
-		if queryFn(rec) {
-			results = append(results, rec)
-		}
-
-		if limit != 0 && limit == len(results) {
-			break
-		}
-	}
-
-	return results, err
-}
-```
-
-Then you just need to create an instance of the model struct,
-and set the embedded hare.Table to the table handle you have.
-Now you are ready to start querying:
-
-```go
-contactsMdl := contactsModel{Table: contactsTbl}
-
-results, err := contactsMdl.query(func(c contact) bool {
+results, err := contacts.Query(func(c models.Contact) bool {
   return c.firstname == "John" && c.lastname == "Doe"
 }, 0)
 ```
 
-Notice how the actual query logic is an anonymous function?
-This allows you to use the full power of Go in your query
-expression.
 
 
+#### Database Administration
 
-#### Creating a table
-
-To create a new table (represented as a json file), you can use the
-Database.CreateTable() method.  This will return a handle to the
-newly created table:
-
-```go
-budgetTbl, err := db.CreateTable("budget")
-```
-
-#### Droping a table
-
-To delete a table you can use the Database.DropTable() method:
-
-```go
-err = db.DropTable("budget")
-```
+There are also built-in methods you can run against the database
+to create a new table or delete an existing table.
 
 
 ## Features
