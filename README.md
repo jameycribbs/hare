@@ -24,6 +24,7 @@ To start using Hare, install Go and run `go get`:
 $ go get github.com/jameycribbs/hare/...
 ```
 
+
 ### Usage
 
 The top-level object in Hare is a `Database`. It is represented as a directory on
@@ -42,6 +43,7 @@ defer db.Close()
 ...
 ```
 
+
 #### Using a table
 
 Each json file is represented by a hare.Table.  To set things up, you need to
@@ -51,7 +53,7 @@ implement 3 simple boilerplate methods that allow it to satisfy the hare.Record
 interface. You can find an example of the needed structs and methods in the
 examples/crud/models/episodes.go file.
 
-Once that needed structs and methods are written, you just need to create an
+Once the needed structs and methods are written, you just need to create an
 instance of the model struct and set it's embedded hare.Table struct pointer
 to a handle you get from Hare by calling the hare.GetTable database method.
 ```go
@@ -63,6 +65,7 @@ if err != nil {
 }
 ```
 
+
 Now you are ready to go!
 
 #### Creating a record
@@ -70,7 +73,7 @@ Now you are ready to go!
 To add a record, you can use the Create() method:
 
 ```go
-recID, err := contacts.Create(&contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
+recID, err := contacts.Create(&models.Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
 ```
 
 
@@ -79,10 +82,11 @@ recID, err := contacts.Create(&contact{FirstName: "John", LastName: "Doe", Phone
 To find a record if you know the record ID, you can use the Find() method:
 
 ```go
-var c contact
+var c models.Contact
 
 err = contacts.Find(1, &c)
 ```
+
 
 #### Updating a record
 
@@ -114,7 +118,6 @@ results, err := contacts.Query(func(c models.Contact) bool {
   return c.firstname == "John" && c.lastname == "Doe"
 }, 0)
 ```
-
 
 
 #### Database Administration
