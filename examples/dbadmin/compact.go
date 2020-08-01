@@ -14,7 +14,7 @@ import (
 // one like it that you write, make sure no
 // processes are using the database!!!
 
-const dirPath = "../example_data/"
+const dirPath = "./data/"
 const tblExt = ".json"
 
 func main() {
@@ -25,10 +25,6 @@ func main() {
 
 	for _, file := range files {
 		filename := file.Name()
-
-		if filename == "mst3k_episodes_default.json" {
-			continue
-		}
 
 		// If entry is sub dir, current dir, or parent dir, skip it.
 		if file.IsDir() || filename == "." || filename == ".." {

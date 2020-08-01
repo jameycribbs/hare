@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// Open the database and return a handle to it.
-	db, err := hare.OpenDB("../example_data")
+	db, err := hare.OpenDB("./data")
 	if err != nil {
 		panic(err)
 	}

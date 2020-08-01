@@ -14,10 +14,10 @@ func (episodes *Episodes) Query(queryFn func(episode Episode) bool, limit int) (
 	var results []Episode
 	var err error
 
-	for _, id := range episodes.Table.IDs() {
+	for _, id := range episodes.IDs() {
 		episode := Episode{}
 
-		if err = episodes.Table.Find(id, &episode); err != nil {
+		if err = episodes.Find(id, &episode); err != nil {
 			return nil, err
 		}
 
