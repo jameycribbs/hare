@@ -150,7 +150,7 @@ and set the embedded hare.Table to the table handle you have.
 Now you are ready to start querying:
 
 ```go
-contactsMdl := model{Table: contactsTbl}
+contactsMdl := contactsModel{Table: contactsTbl}
 
 results, err := contactsMdl.query(func(c contact) bool {
   return c.firstname == "John" && c.lastname == "Doe"
