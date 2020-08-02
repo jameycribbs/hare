@@ -27,50 +27,45 @@ $ go get github.com/jameycribbs/hare/...
 
 ### Usage
 
-The top-level object in Hare is a `Database`. It is represented as a directory on
-your disk.
-
-To open your database, simply use the `hare.OpenDB()` function:
-
-```go
-// OpenDB takes a directory path containing zero or more json files and returns
-// a database connection.
-db, err := hare.OpenDB("data")
-if err != nil {
-  ...
-}
-defer db.Close()
-...
-```
-
-
-#### Using a table
+#### Setting up Hare to use the Json file
 
 Each json file is represented by a hare.Table.  To set things up, you need to
 create a struct with an embedded pointer to a hare.Table and add a Query method
 to it.  Additionally, you need to create a struct for a table's record and
 implement 3 simple boilerplate methods that allow it to satisfy the hare.Record
-interface. You can find an example of the needed structs and methods in the
+interface. A good way to structure this is to put this boilerplate code in a
+"models" package in your main project.  You can find an example of this in the
 examples/crud/models/episodes.go file.
 
-Once the needed structs and methods are written, you just need to create an
-instance of the model struct and set it's embedded hare.Table struct pointer
-to a handle you get from Hare by calling the hare.GetTable database method.
+Now you are ready to go!
+
+The top-level object in Hare is a `Database`. It is represented as a directory on
+your disk.
+
+To open your database, simply use the `hare.OpenDB` function:
+
+```go
+// OpenDB takes a directory path containing zero or more json files and returns
+// a database connection.
+db, err := hare.OpenDB("data")
+
+defer db.Close()
+...
+```
+
+Now, grab a reference to the hare.Table for the Json file and store it in your
+model:
+
 ```go
 var contacts models.Contacts
 
 contacts.Table, err = db.GetTable("contacts")
-if err != nil {
-	panic(err)
-}
 ```
 
 
-Now you are ready to go!
-
 #### Creating a record
 
-To add a record, you can use the Create() method:
+To add a record, you can use the `Create` method:
 
 ```go
 recID, err := contacts.Create(&models.Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
@@ -79,7 +74,7 @@ recID, err := contacts.Create(&models.Contact{FirstName: "John", LastName: "Doe"
 
 #### Finding a record
 
-To find a record if you know the record ID, you can use the Find() method:
+To find a record if you know the record ID, you can use the `Find` method:
 
 ```go
 var c models.Contact
@@ -90,7 +85,7 @@ err = contacts.Find(1, &c)
 
 #### Updating a record
 
-To update a record, you can use the Update() method:
+To update a record, you can use the `Update` method:
 
 ```go
 c.Age = 22
@@ -101,7 +96,7 @@ err = contacts.Update(&c)
 
 #### Deleting a record
 
-To delete a record, you can use the Destroy() method:
+To delete a record, you can use the `Destroy` method:
 
 ```go
 err = contacts.Destroy(3)
