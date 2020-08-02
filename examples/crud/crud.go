@@ -21,6 +21,7 @@ func main() {
 
 	// Let's grab a handle to the MST3K Episodes table
 	// so we can play with it.
+
 	episodes.Table, err = db.GetTable("mst3k_episodes")
 	if err != nil {
 		panic(err)
@@ -35,6 +36,7 @@ func main() {
 	// It will be supplied by Hare when it creates the record.
 	// You simply pass the new record to the Create method.  Hare will
 	// add the record to the table and return the new record's ID.
+
 	recID, err := episodes.Create(&models.Episode{
 		Season:           6,
 		Episode:          19,
@@ -56,8 +58,6 @@ func main() {
 	// To read a specific record, you use the Find method.
 	// You must know the record ID.
 
-	// For more general querying, check out the example program in the
-	// "querying" directory.
 	rec := models.Episode{}
 
 	err = episodes.Find(4, &rec)
@@ -75,6 +75,13 @@ func main() {
 	// ID field.  You simply change the desired attributes, and then
 	// pass the changed record to the Update method.
 
+	// DO NOT CHANGE THE ID ATTRIBUTE!!!
+
+	rec.Film = "The Skydivers - The Final Cut"
+	if err = episodes.Update(&rec); err != nil {
+		panic(err)
+	}
+
 	// If you take a look inside ./data/mst3k_episodes.json after running
 	// this example program, you will see a line of "X"'s right above the
 	// line holding the line for id 5.  That is called a dummy record in
@@ -86,15 +93,15 @@ func main() {
 	// dummy record's space the next time it needs more space for a new or
 	// updated record.
 
-	rec.Film = "The Skydivers - The Final Cut"
-	if err = episodes.Update(&rec); err != nil {
-		panic(err)
-	}
-
 	//----- DELETE -----
 
 	// To delete a record, you use the Destroy method.
 	// You must know the record ID.
+
+	err = episodes.Destroy(2)
+	if err != nil {
+		panic(err)
+	}
 
 	// If you take a look inside ./data/mst3k_episodes.json after running
 	// this example program, you will see that the second line of the file,
@@ -102,15 +109,14 @@ func main() {
 	// with a dummy line.  This is how Hare deletes a record.  Hare will
 	// attempt to re-use the dummy record's space the next time it needs
 	// more space for a new or updated record.
-	err = episodes.Destroy(2)
-	if err != nil {
-		panic(err)
-	}
+
+	//----- QUERYING -----
 
 	// Now we will run a query for episodes that Joel hosted.
-	// Notice that we are actually passing the query expression as an
-	// anonymous function.  This allows us to use power of Go itself to
+	// Notice how we are actually passing the query expression as an
+	// closure?  This allows us to use power of Go itself to
 	// query the database.  There is no need to learn and use a DSL.
+
 	results, err := episodes.Query(func(r models.Episode) bool {
 		return r.Host == "Joel"
 	}, 0)

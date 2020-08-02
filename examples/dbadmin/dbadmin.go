@@ -14,6 +14,11 @@ func main() {
 	}
 	defer db.Close()
 
+	// Here is how to check if a table exists in your database.
+	if !db.TableExists("contacts") {
+		fmt.Println("Table 'contacts' does not exist!")
+	}
+
 	// Here is how to create a new table in the database and get back a
 	// handle to it.
 	tbl, err := db.CreateTable("contacts")
