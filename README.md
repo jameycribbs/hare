@@ -27,14 +27,19 @@ $ go get github.com/jameycribbs/hare/...
 
 ### Usage
 
-#### Setting up Hare to use the Json file
+#### Setting up Hare to use your JSON file(s)
 
-Each json file is represented by a hare.Table.  To set things up, you need to
+Each JSON file is represented by a hare.Table.  To set things up, you need to
 create a struct with an embedded pointer to a hare.Table and add a Query method
-to it.  Additionally, you need to create a struct for a table's record and
-implement 3 simple boilerplate methods that allow it to satisfy the hare.Record
-interface. A good way to structure this is to put this boilerplate code in a
-"models" package in your main project.  You can find an example of this in the
+to it.
+
+Additionally, you need to create a struct for a table's record, with
+it's members cooresponding to the JSON field names, and implement 3 simple
+boilerplate methods on that struct that allow it to satisfy the hare.Record
+interface.
+
+A good way to structure this is to put this boilerplate code in a "models"
+package in your main project.  You can find an example of this in the
 examples/crud/models/episodes.go file.
 
 Now you are ready to go!
@@ -45,7 +50,7 @@ your disk.
 To open your database, simply use the `hare.OpenDB` function:
 
 ```go
-// OpenDB takes a directory path containing zero or more json files and returns
+// OpenDB takes a directory path containing zero or more JSON files and returns
 // a database connection.
 db, err := hare.OpenDB("data")
 
@@ -53,7 +58,7 @@ defer db.Close()
 ...
 ```
 
-Now, grab a reference to the hare.Table for the Json file and store it in your
+Now, grab a reference to the hare.Table for the JSON file and store it in your
 model:
 
 ```go
