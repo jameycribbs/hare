@@ -44,10 +44,10 @@ examples/crud/models/episodes.go file.
 
 Now you are ready to go!
 
-Let's say you have a "data" directory with a file in it called contacts.json.
+Let's say you have a "data" directory with a file in it called "contacts.json".
 
-The top-level object in Hare is a `Database`. It is represented as a directory on
-your disk.
+The top-level object in Hare is a `Database`. It represents the directory on
+your disk where the JSON files are located.
 
 To open your database, simply use the `hare.OpenDB` function:
 
@@ -112,8 +112,8 @@ err = contacts.Destroy(3)
 
 #### Querying a table
 
-To query the database, you can write your query in pure Go and pass it to your
-model's Query method as a closure.
+To query the database, you can write your query expression in pure Go and pass
+it to your model's Query method as a closure.
 
 ```go
 results, err := contacts.Query(func(c models.Contact) bool {
