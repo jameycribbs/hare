@@ -39,10 +39,12 @@ boilerplate methods on that struct that allow it to satisfy the hare.Record
 interface.
 
 A good way to structure this is to put this boilerplate code in a "models"
-package in your main project.  You can find an example of this in the
+package in your project.  You can find an example of this boilerplate code in the
 examples/crud/models/episodes.go file.
 
 Now you are ready to go!
+
+Let's say you have a "data" directory with a file in it called contacts.json.
 
 The top-level object in Hare is a `Database`. It is represented as a directory on
 your disk.
