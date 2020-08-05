@@ -1,7 +1,5 @@
-/*
-Package hare implements a simple DBMS that stores it's date
-in newline-delimited json files.
-*/
+//Package hare implements a simple DBMS that stores it's data
+//in newline-delimited json files.
 package hare
 
 import (
@@ -47,7 +45,7 @@ func OpenDB(dbPath string) (*Database, error) {
 			continue
 		}
 
-		tbl, err := openTable(db.path+"/"+filename, false)
+		tbl, err := db.openTable(filename, false)
 		if err != nil {
 			return nil, err
 		}
@@ -76,13 +74,14 @@ func (db *Database) Close() error {
 	return nil
 }
 
-// CreateTable takes a table name and returns a pointer to a Table struct.
+// CreateTable takes a table name, creates a new json file,
+// and returns a pointer to a Table struct.
 func (db *Database) CreateTable(tblName string) (*Table, error) {
 	if db.TableExists(tblName) {
 		return nil, errors.New("table already exists")
 	}
 
-	tbl, err := openTable(db.path+"/"+tblName+tblExt, true)
+	tbl, err := db.openTable(tblName+tblExt, true)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +116,7 @@ func (db *Database) DropTable(tblName string) error {
 	return nil
 }
 
+// GetTable takes a table name and returns a pointer to a Table struct.
 func (db *Database) GetTable(tblName string) (*Table, error) {
 	tbl, ok := db.tables[tblName]
 	if !ok {
@@ -132,4 +132,30 @@ func (db *Database) TableExists(tblName string) bool {
 	_, ok := db.tables[tblName]
 
 	return ok
+}
+
+//******************************************************************************
+// UNEXPORTED METHODS
+//******************************************************************************
+
+func (db *Database) openTable(fileName string, includeCreatePerm bool) (*Table, error) {
+	var err error
+
+	filePath := db.path + "/" + fileName
+	tbl := new(Table)
+	perm := os.O_RDWR
+
+	if includeCreatePerm {
+		perm = os.O_CREATE | os.O_RDWR
+	}
+
+	tbl.filePtr, err = os.OpenFile(filePath, perm, 0660)
+	if err != nil {
+		return nil, err
+	}
+
+	tbl.initIndex()
+	tbl.initLastID()
+
+	return tbl, nil
 }

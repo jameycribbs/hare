@@ -13,6 +13,7 @@ record.  It is a good fit for applications that require a simple embedded DBMS.
   - [Installing](#installing)
   - [Usage](#usage)
 - [Features](#features)
+- [Example Web App](#example-web-app)
 
 ## Getting Started
 
@@ -21,7 +22,7 @@ record.  It is a good fit for applications that require a simple embedded DBMS.
 To start using Hare, install Go and run `go get`:
 
 ```sh
-$ go get github.com/jameycribbs/hare/...
+$ go get github.com/jameycribbs/hare
 ```
 
 
@@ -140,3 +141,12 @@ to create a new table or delete an existing table.
 
 * The database is not read into memory, but is queried from disk, so
   no need to worry about a large dataset filling up memory.
+
+
+## Example Web App
+
+[SnippetBox using Hare](https://www.github.com/jameycribbs/snippetbox_hare)
+This is a version of the SnippetBox web application featured in Alex
+Edward's outstanding book, [Let's Go](https://lets-go.alexedwards.net/),
+with Hare replacing MySQL as the DBMS.  This is just a demonstration,
+mainly to show how you could use Hare in a web application.

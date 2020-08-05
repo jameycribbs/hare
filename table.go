@@ -12,12 +12,16 @@ import (
 
 const dummyRune = 'X'
 
+// Record represents a table record and required associated methods.
 type Record interface {
 	SetID(int)
 	GetID() int
 	AfterFind()
 }
 
+// Table contains attributes for the associated JSON file pointer, a
+// read/write mutex, the last ID used, and a map holding an index
+// to each record location in the JSON file.
 type Table struct {
 	filePtr *os.File
 	sync.RWMutex
@@ -25,27 +29,7 @@ type Table struct {
 	index  map[int]int64
 }
 
-func openTable(filePath string, includeCreatePerm bool) (*Table, error) {
-	var err error
-
-	tbl := new(Table)
-	perm := os.O_RDWR
-
-	if includeCreatePerm {
-		perm = os.O_CREATE | os.O_RDWR
-	}
-
-	tbl.filePtr, err = os.OpenFile(filePath, perm, 0660)
-	if err != nil {
-		return nil, err
-	}
-
-	tbl.initIndex()
-	tbl.initLastID()
-
-	return tbl, nil
-}
-
+// IDs returns an array of all record IDs in the table.
 func (tbl *Table) IDs() []int {
 	keys := make([]int, len(tbl.index))
 
@@ -58,13 +42,15 @@ func (tbl *Table) IDs() []int {
 	return keys
 }
 
+// Find takes an id and Record and populates it with data from the table
+// record whose ID matches.
 func (tbl *Table) Find(id int, rec Record) error {
 	tbl.RLock()
 	defer tbl.RUnlock()
 
 	offset, ok := tbl.index[id]
 	if !ok {
-		return errors.New("Find Error: Record with ID of " + strconv.Itoa(id) + " does not exist!")
+		return errors.New("Find Error: No matching record found!")
 	}
 
 	rawRec, err := tbl.readRec(offset)
@@ -82,6 +68,8 @@ func (tbl *Table) Find(id int, rec Record) error {
 	return nil
 }
 
+// Create takes a Record and writes it's contents as a new record to the table,
+// and returns the ID assigned to the new record.
 func (tbl *Table) Create(rec Record) (int, error) {
 	tbl.Lock()
 	defer tbl.Unlock()
@@ -110,7 +98,8 @@ func (tbl *Table) Create(rec Record) (int, error) {
 		return 0, err
 	}
 
-	// Line too big to fit on any dummy record line, so go to the end of file so we can add it to end of the file.
+	// Line too big to fit on any dummy record line, so go to the end of file
+	// so we can add it to end of the file.
 	if whence == 2 {
 		offset, err = tbl.filePtr.Seek(0, 2)
 
@@ -132,8 +121,8 @@ func (tbl *Table) Create(rec Record) (int, error) {
 	return recID, nil
 }
 
-// Destroy takes a record ID (int) and removes the
-// corresponding record from the table's json file.
+// Destroy takes a record ID and removes the corresponding record from
+// the table.
 func (tbl *Table) Destroy(recID int) error {
 	var err error
 
@@ -214,7 +203,8 @@ func (tbl *Table) Update(rec Record) error {
 	} else if diff < 0 {
 		// Changed record is larger than the record in table.
 
-		// First check to see if we can fit it onto a line with a dummy record...
+		// First check to see if we can fit it onto a line with a dummy
+		// record...
 		offset, err = tbl.offsetToFitRec(len(newRec))
 
 		switch err := err.(type) {
@@ -225,7 +215,8 @@ func (tbl *Table) Update(rec Record) error {
 			return err
 		}
 
-		// If we can't fit the updated record onto a line with a dummy record, then go to the End of File.
+		// If we can't fit the updated record onto a line with a dummy
+		// record, then go to the End of File.
 		if goToEoF {
 			offset, err = tbl.filePtr.Seek(0, 2)
 			if err != nil {
@@ -243,11 +234,11 @@ func (tbl *Table) Update(rec Record) error {
 			return err
 		}
 
-		// Update index with new offset since record is in new position in the file.
+		// Update index with new offset since record is in new position
+		// in the file.
 		tbl.index[recID] = offset
 	} else {
 		// Changed record is same length as record in table.
-
 		err = tbl.writeRec(tbl.index[recID], 0, newRec)
 		if err != nil {
 			return err
@@ -258,7 +249,7 @@ func (tbl *Table) Update(rec Record) error {
 }
 
 //******************************************************************************
-// PRIVATE METHODS
+// UNEXPORTED METHODS
 //******************************************************************************
 
 func (tbl *Table) incrementLastID() int {
