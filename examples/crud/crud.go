@@ -6,38 +6,25 @@ import (
 	"time"
 
 	"github.com/jameycribbs/hare"
+	"github.com/jameycribbs/hare/datastores/disk"
 	"github.com/jameycribbs/hare/examples/crud/models"
 )
 
 func main() {
-	var episodes models.Episodes
+	ds, err := disk.New("./data", ".json")
+	if err != nil {
+		panic(err)
+	}
 
-	// Open the database and return a handle to it.
-	db, err := hare.OpenDB("./data")
+	db, err := hare.New(ds)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-	// Let's grab a handle to the MST3K Episodes table
-	// so we can play with it.
-
-	episodes.Table, err = db.GetTable("mst3k_episodes")
-	if err != nil {
-		panic(err)
-	}
-
 	//----- CREATE -----
 
-	// Here's how to create a new record.
-
-	// To create a record, you pass a populated struct that satisfies the
-	// hare.Record interface.  Do NOT populate the ID attribute!
-	// It will be supplied by Hare when it creates the record.
-	// You simply pass the new record to the Create method.  Hare will
-	// add the record to the table and return the new record's ID.
-
-	recID, err := episodes.Create(&models.Episode{
+	recID, err := db.Insert("mst3k_episodes", &models.Episode{
 		Season:           6,
 		Episode:          19,
 		Film:             "Red Zone Cuba",
@@ -55,12 +42,9 @@ func main() {
 
 	//----- READ -----
 
-	// To read a specific record, you use the Find method.
-	// You must know the record ID.
-
 	rec := models.Episode{}
 
-	err = episodes.Find(4, &rec)
+	err = db.Find("mst3k_episodes", 4, &rec)
 	if err != nil {
 		panic(err)
 	}
@@ -69,55 +53,21 @@ func main() {
 
 	//----- UPDATE -----
 
-	// Here's how to update a record.
-
-	// To update a record, you must have a populated record, including the
-	// ID field.  You simply change the desired attributes, and then
-	// pass the changed record to the Update method.
-
-	// DO NOT CHANGE THE ID ATTRIBUTE!!!
-
 	rec.Film = "The Skydivers - The Final Cut"
-	if err = episodes.Update(&rec); err != nil {
+	if err = db.Update("mst3k_episodes", &rec); err != nil {
 		panic(err)
 	}
 
-	// If you take a look inside ./data/mst3k_episodes.json after running
-	// this example program, you will see a line of "X"'s right above the
-	// line holding the line for id 5.  That is called a dummy record in
-	// Hare, and it gets created when Hare has to update a record and the
-	// changes have increased the record length.  Because the change we made
-	// to the record with id 4 increased the record length, Hare dummied out
-	// the existing version of record 3 and wrote the changed version of the
-	// record at the bottom of the file.  Hare will attempt to re-use the
-	// dummy record's space the next time it needs more space for a new or
-	// updated record.
-
 	//----- DELETE -----
 
-	// To delete a record, you use the Destroy method.
-	// You must know the record ID.
-
-	err = episodes.Destroy(2)
+	err = db.Delete("mst3k_episodes", 2)
 	if err != nil {
 		panic(err)
 	}
 
-	// If you take a look inside ./data/mst3k_episodes.json after running
-	// this example program, you will see that the second line of the file,
-	// which was where the record with id 2 existed, has been replaced
-	// with a dummy line.  This is how Hare deletes a record.  Hare will
-	// attempt to re-use the dummy record's space the next time it needs
-	// more space for a new or updated record.
-
 	//----- QUERYING -----
 
-	// Now we will run a query for episodes that Joel hosted.
-	// Notice how we are actually passing the query expression as an
-	// closure?  This allows us to use power of Go itself to
-	// query the database.  There is no need to learn and use a DSL.
-
-	results, err := episodes.Query(func(r models.Episode) bool {
+	results, err := models.QueryEpisodes(db, func(r models.Episode) bool {
 		return r.Host == "Joel"
 	}, 0)
 	if err != nil {
@@ -130,7 +80,7 @@ func main() {
 }
 
 func init() {
-	cmd := exec.Command("cp", "./data/mst3k_episodes_default.json", "./data/mst3k_episodes.json")
+	cmd := exec.Command("cp", "./data/mst3k_episodes_default.txt", "./data/mst3k_episodes.json")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}

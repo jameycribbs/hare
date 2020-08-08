@@ -49,7 +49,7 @@ func TestAllTableTests(t *testing.T) {
 			rec := record{}
 			err = tbl.Find(3, &rec)
 			if err != nil {
-				panic(err)
+				t.Fatal(err)
 			}
 
 			filmShouldBe := "The Skydivers"

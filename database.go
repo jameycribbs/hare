@@ -3,159 +3,248 @@
 package hare
 
 import (
+	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"os"
-	"strings"
+	"sync"
 )
 
-const tblExt = ".json"
+var (
+	ErrNoTable     = errors.New("hare: no table with that name found")
+	ErrTableExists = errors.New("hare: table with that name already exists")
+)
 
-// Database contains attributes for the database path and all tables
-// associated with the database.
-type Database struct {
-	path   string
-	tables map[string]*Table
+type Record interface {
+	SetID(int)
+	GetID() int
+	AfterFind()
 }
 
-// OpenDB takes a directory path pointing to one or more json files and returns
-// a pointer to a Database struct.
-func OpenDB(dbPath string) (*Database, error) {
-	db := new(Database)
+type datastorage interface {
+	Close() error
+	CreateTable(string) error
+	DeleteRec(string, int) error
+	GetLastID(string) (int, error)
+	IDs(string) ([]int, error)
+	InsertRec(string, int, []byte) error
+	ReadRec(string, int) ([]byte, error)
+	RemoveTable(string) error
+	TableExists(string) bool
+	TableNames() []string
+	UpdateRec(string, int, []byte) error
+}
 
-	db.path = dbPath
-	db.tables = make(map[string]*Table)
+type Database struct {
+	store   datastorage
+	locks   map[string]*sync.RWMutex
+	lastIDs map[string]int
+}
 
-	files, err := ioutil.ReadDir(db.path)
-	if err != nil {
-		return nil, err
-	}
+func New(ds datastorage) (*Database, error) {
+	db := &Database{store: ds}
+	db.locks = make(map[string]*sync.RWMutex)
+	db.lastIDs = make(map[string]int)
 
-	// Loop through all json files in database directory, initialize them,
-	// and register them in the database.
-	for _, file := range files {
-		filename := file.Name()
+	for _, tableName := range db.store.TableNames() {
+		db.locks[tableName] = &sync.RWMutex{}
 
-		// If entry is sub dir, current dir, or parent dir, skip it.
-		if file.IsDir() || filename == "." || filename == ".." {
-			continue
-		}
-
-		if !strings.HasSuffix(filename, tblExt) {
-			continue
-		}
-
-		tbl, err := db.openTable(filename, false)
+		lastID, err := db.store.GetLastID(tableName)
 		if err != nil {
 			return nil, err
 		}
-
-		db.tables[strings.TrimSuffix(filename, tblExt)] = tbl
+		db.lastIDs[tableName] = lastID
 	}
 
 	return db, nil
 }
 
-// Close closes all files associated with the database.
 func (db *Database) Close() error {
-	for _, tbl := range db.tables {
-		tbl.Lock()
-
-		if err := tbl.filePtr.Close(); err != nil {
-			return err
-		}
-
-		tbl.Unlock()
+	for _, lock := range db.locks {
+		lock.Lock()
 	}
 
-	db.path = ""
-	db.tables = nil
+	if err := db.store.Close(); err != nil {
+		return err
+	}
+
+	for _, lock := range db.locks {
+		lock.Unlock()
+	}
+
+	db.store = nil
+	db.locks = nil
+	db.lastIDs = nil
 
 	return nil
 }
 
-// CreateTable takes a table name, creates a new json file,
-// and returns a pointer to a Table struct.
-func (db *Database) CreateTable(tblName string) (*Table, error) {
-	if db.TableExists(tblName) {
-		return nil, errors.New("table already exists")
+func (db *Database) CreateTable(tableName string) error {
+	if db.TableExists(tableName) {
+		return ErrTableExists
 	}
 
-	tbl, err := db.openTable(tblName+tblExt, true)
+	if err := db.store.CreateTable(tableName); err != nil {
+		return nil
+	}
+
+	db.locks[tableName] = &sync.RWMutex{}
+
+	lastID, err := db.store.GetLastID(tableName)
+	if err != nil {
+		return err
+	}
+	db.lastIDs[tableName] = lastID
+
+	return nil
+}
+
+func (db *Database) Delete(tableName string, id int) error {
+	if !db.TableExists(tableName) {
+		return ErrNoTable
+	}
+
+	db.locks[tableName].Lock()
+	defer db.locks[tableName].Unlock()
+
+	if err := db.store.DeleteRec(tableName, id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *Database) DropTable(tableName string) error {
+	if !db.TableExists(tableName) {
+		return ErrNoTable
+	}
+
+	db.locks[tableName].Lock()
+	defer db.locks[tableName].Unlock()
+
+	if err := db.store.RemoveTable(tableName); err != nil {
+		db.locks[tableName].Unlock()
+		return err
+	}
+
+	delete(db.lastIDs, tableName)
+
+	db.locks[tableName].Unlock()
+
+	delete(db.locks, tableName)
+
+	return nil
+}
+
+func (db *Database) Find(tableName string, id int, rec Record) error {
+	if !db.TableExists(tableName) {
+		return ErrNoTable
+	}
+
+	db.locks[tableName].RLock()
+	defer db.locks[tableName].RUnlock()
+
+	rawRec, err := db.store.ReadRec(tableName, id)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(rawRec, rec)
+	if err != nil {
+		return err
+	}
+
+	rec.AfterFind()
+
+	return nil
+}
+
+func (db *Database) IDs(tableName string) ([]int, error) {
+	if !db.TableExists(tableName) {
+		return nil, ErrNoTable
+	}
+
+	db.locks[tableName].Lock()
+	defer db.locks[tableName].Unlock()
+
+	ids, err := db.store.IDs(tableName)
 	if err != nil {
 		return nil, err
 	}
 
-	db.tables[tblName] = tbl
-
-	return db.tables[tblName], nil
+	return ids, err
 }
 
-// DropTable takes a table name and deletes the associated json file.
-func (db *Database) DropTable(tblName string) error {
-	tbl, err := db.GetTable(tblName)
+func (db *Database) Insert(tableName string, rec Record) (int, error) {
+	if !db.TableExists(tableName) {
+		return 0, ErrNoTable
+	}
+
+	db.locks[tableName].Lock()
+	defer db.locks[tableName].Unlock()
+
+	id := db.incrementLastID(tableName)
+	rec.SetID(id)
+
+	rawRec, err := json.Marshal(rec)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	tbl.Lock()
-	defer tbl.Unlock()
-
-	if err = tbl.filePtr.Close(); err != nil {
-		return err
+	if err := db.store.InsertRec(tableName, id, rawRec); err != nil {
+		return 0, err
 	}
 
-	delete(db.tables, tblName)
-
-	tbl = nil
-
-	if err = os.Remove(db.path + "/" + tblName + tblExt); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// GetTable takes a table name and returns a pointer to a Table struct.
-func (db *Database) GetTable(tblName string) (*Table, error) {
-	tbl, ok := db.tables[tblName]
-	if !ok {
-		return nil, errors.New("table does not exist")
-	}
-
-	return tbl, nil
+	return id, nil
 }
 
 // TableExists takes a table name and returns true if the table exists,
 // false if it does not.
-func (db *Database) TableExists(tblName string) bool {
-	_, ok := db.tables[tblName]
-
-	return ok
+func (db *Database) TableExists(tableName string) bool {
+	return db.tableExists(tableName) && db.store.TableExists(tableName)
 }
 
-//******************************************************************************
-// UNEXPORTED METHODS
-//******************************************************************************
-
-func (db *Database) openTable(fileName string, includeCreatePerm bool) (*Table, error) {
-	var err error
-
-	filePath := db.path + "/" + fileName
-	tbl := new(Table)
-	perm := os.O_RDWR
-
-	if includeCreatePerm {
-		perm = os.O_CREATE | os.O_RDWR
+func (db *Database) Update(tableName string, rec Record) error {
+	if !db.TableExists(tableName) {
+		return ErrNoTable
 	}
 
-	tbl.filePtr, err = os.OpenFile(filePath, perm, 0660)
+	db.locks[tableName].Lock()
+	defer db.locks[tableName].Unlock()
+
+	id := rec.GetID()
+
+	rawRec, err := json.Marshal(rec)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	tbl.initIndex()
-	tbl.initLastID()
+	if err := db.store.UpdateRec(tableName, id, rawRec); err != nil {
+		return err
+	}
 
-	return tbl, nil
+	return nil
+}
+
+// unexported methods
+
+func (db *Database) incrementLastID(tableName string) int {
+	lastID := db.lastIDs[tableName]
+
+	lastID++
+
+	db.lastIDs[tableName] = lastID
+
+	return lastID
+}
+
+func (db *Database) tableExists(tableName string) bool {
+	_, ok := db.locks[tableName]
+	if !ok {
+		return false
+	}
+	_, ok = db.lastIDs[tableName]
+	if !ok {
+		return false
+	}
+
+	return ok
 }
