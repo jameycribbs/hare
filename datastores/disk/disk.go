@@ -89,7 +89,7 @@ func (dsk *Disk) IDs(tableName string) ([]int, error) {
 		return nil, err
 	}
 
-	return tableFile.IDs(), nil
+	return tableFile.ids(), nil
 }
 
 func (dsk *Disk) InsertRec(tableName string, id int, rec []byte) error {

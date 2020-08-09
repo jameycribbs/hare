@@ -89,7 +89,7 @@ func (t *tableFile) getLastID() int {
 	return lastID
 }
 
-func (t *tableFile) IDs() []int {
+func (t *tableFile) ids() []int {
 	ids := make([]int, len(t.offsets))
 
 	i := 0
@@ -101,6 +101,9 @@ func (t *tableFile) IDs() []int {
 	return ids
 }
 
+// offsetForWritingRec takes a record length and returns the offset in the file
+// where the record is to be written.  It will try to fit the record on a dummy
+// line, otherwise, it will return the offset at the end of the file.
 func (t *tableFile) offsetForWritingRec(recLen int) (int64, error) {
 	var offset int64
 	var err error
@@ -117,13 +120,14 @@ func (t *tableFile) offsetForWritingRec(recLen int) (int64, error) {
 			return 0, err
 		}
 	default:
-		// Found one!
 		return 0, recFitErr
 	}
 
 	return offset, nil
 }
 
+// offsetToFitRec takes a record length and checks all the dummy records to see
+// if any are big enough to fit the record.
 func (t *tableFile) offsetToFitRec(recLenNeeded int) (int64, error) {
 	var recLen int
 	var offset int64
@@ -314,5 +318,5 @@ type dummiesTooShortError struct {
 }
 
 func (e dummiesTooShortError) Error() string {
-	return ""
+	return "all dummy records are too short"
 }
