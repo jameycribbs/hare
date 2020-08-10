@@ -77,6 +77,26 @@ func (t *tableFile) close() error {
 	return nil
 }
 
+func (t *tableFile) deleteRec(id int) error {
+	offset, ok := t.offsets[id]
+	if !ok {
+		return ErrNoRecord
+	}
+
+	rec, err := t.readRec(id)
+	if err != nil {
+		return err
+	}
+
+	if err = t.overwriteRec(offset, len(rec)); err != nil {
+		return err
+	}
+
+	delete(t.offsets, id)
+
+	return nil
+}
+
 func (t *tableFile) getLastID() int {
 	var lastID int
 
@@ -167,26 +187,6 @@ func (t *tableFile) offsetToFitRec(recLenNeeded int) (int64, error) {
 	}
 
 	return 0, dummiesTooShortError{}
-}
-
-func (t *tableFile) deleteRec(id int) error {
-	offset, ok := t.offsets[id]
-	if !ok {
-		return ErrNoRecord
-	}
-
-	rec, err := t.readRec(id)
-	if err != nil {
-		return err
-	}
-
-	if err = t.overwriteRec(offset, len(rec)); err != nil {
-		return err
-	}
-
-	delete(t.offsets, id)
-
-	return nil
 }
 
 func (t *tableFile) overwriteRec(offset int64, recLen int) error {

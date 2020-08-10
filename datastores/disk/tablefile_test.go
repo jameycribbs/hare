@@ -3,6 +3,7 @@ package disk
 import (
 	"bufio"
 	"errors"
+	"reflect"
 	"sort"
 	"strconv"
 	"testing"
@@ -10,6 +11,72 @@ import (
 
 func TestAllTableFileTests(t *testing.T) {
 	var tests = []func(t *testing.T){
+		func(t *testing.T) {
+			//New...
+
+			tf := newTestTableFile(t)
+			defer tf.close()
+
+			want := make(map[int]int64)
+			want[1] = 0
+			want[2] = 101
+			want[3] = 160
+			want[4] = 224
+
+			got := tf.offsets
+
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//close...
+
+			tf := newTestTableFile(t)
+			tf.close()
+
+			_, gotErr := tf.readRec(3)
+			if !errors.Is(gotErr, ErrNoRecord) {
+				t.Errorf("want %v; got %v", ErrNoRecord, gotErr)
+			}
+
+			got := tf.offsets
+
+			if nil != got {
+				t.Errorf("want %v; got %v", nil, got)
+			}
+		},
+		func(t *testing.T) {
+			//deleteRec...
+
+			tf := newTestTableFile(t)
+			defer tf.close()
+
+			offset := tf.offsets[3]
+
+			err := tf.deleteRec(3)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"
+
+			r := bufio.NewReader(tf.ptr)
+
+			if _, err := tf.ptr.Seek(offset, 0); err != nil {
+				t.Fatal(err)
+			}
+
+			rec, err := r.ReadBytes('\n')
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
 		func(t *testing.T) {
 			//getLastID...
 
@@ -93,14 +160,14 @@ func TestAllTableFileTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//deleteRec...
+			//overwriteRec...
 
 			tf := newTestTableFile(t)
 			defer tf.close()
 
 			offset := tf.offsets[3]
 
-			err := tf.deleteRec(3)
+			err := tf.overwriteRec(160, 64)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -136,6 +203,76 @@ func TestAllTableFileTests(t *testing.T) {
 
 			want := "{\"id\":3,\"first_name\":\"Bill\",\"last_name\":\"Shakespeare\",\"age\":18}\n"
 			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//updateRec (fits on same line)...
+
+			tf := newTestTableFile(t)
+			defer tf.close()
+
+			err := tf.updateRec(3, []byte("{\"id\":3,\"first_name\":\"Bill\",\"last_name\":\"Shakespeare\",\"age\":92}"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			wantOffset := int64(160)
+			gotOffset := tf.offsets[3]
+
+			if wantOffset != gotOffset {
+				t.Errorf("want %v; got %v", wantOffset, gotOffset)
+			}
+
+			rec, err := tf.readRec(3)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "{\"id\":3,\"first_name\":\"Bill\",\"last_name\":\"Shakespeare\",\"age\":92}\n"
+			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//updateRec (does not fit on same line)...
+
+			tf := newTestTableFile(t)
+			defer tf.close()
+
+			err := tf.updateRec(3, []byte("{\"id\":3,\"first_name\":\"William\",\"last_name\":\"Shakespeare\",\"age\":18}"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			wantOffset := int64(284)
+			gotOffset := tf.offsets[3]
+
+			if wantOffset != gotOffset {
+				t.Errorf("want %v; got %v", wantOffset, gotOffset)
+			}
+
+			rec, err := tf.readRec(3)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "{\"id\":3,\"first_name\":\"William\",\"last_name\":\"Shakespeare\",\"age\":18}\n"
+			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//padRec...
+
+			want := "\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+			got := string(padRec(50))
 
 			if want != got {
 				t.Errorf("want %v; got %v", want, got)
