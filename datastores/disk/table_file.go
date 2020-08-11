@@ -19,7 +19,7 @@ type tableFile struct {
 	offsets map[int]int64
 }
 
-func NewTableFile(tableName string, filePtr *os.File) (*tableFile, error) {
+func newTableFile(tableName string, filePtr *os.File) (*tableFile, error) {
 	var currentOffset int64
 	var totalOffset int64
 	var recLen int

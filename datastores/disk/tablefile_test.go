@@ -35,9 +35,11 @@ func TestAllTableFileTests(t *testing.T) {
 			tf := newTestTableFile(t)
 			tf.close()
 
+			wantErr := ErrNoRecord
 			_, gotErr := tf.readRec(3)
-			if !errors.Is(gotErr, ErrNoRecord) {
-				t.Errorf("want %v; got %v", ErrNoRecord, gotErr)
+
+			if !errors.Is(gotErr, wantErr) {
+				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 
 			got := tf.offsets

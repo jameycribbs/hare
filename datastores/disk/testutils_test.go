@@ -6,13 +6,22 @@ import (
 	"testing"
 )
 
+func newTestDisk(t *testing.T) *Disk {
+	dsk, err := New("./testdata", ".json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return dsk
+}
+
 func newTestTableFile(t *testing.T) *tableFile {
 	filePtr, err := os.OpenFile("./testdata/contacts.json", os.O_RDWR, 0660)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tf, err := NewTableFile("contacts", filePtr)
+	tf, err := newTableFile("contacts", filePtr)
 	if err != nil {
 		t.Fatal(err)
 	}

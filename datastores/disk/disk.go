@@ -38,6 +38,10 @@ func (dsk *Disk) Close() error {
 		}
 	}
 
+	dsk.path = ""
+	dsk.ext = ""
+	dsk.tableFiles = nil
+
 	return nil
 }
 
@@ -51,7 +55,7 @@ func (dsk *Disk) CreateTable(tableName string) error {
 		return err
 	}
 
-	tableFile, err := NewTableFile(tableName, filePtr)
+	tableFile, err := newTableFile(tableName, filePtr)
 	if err != nil {
 		return err
 	}
@@ -225,7 +229,7 @@ func (dsk *Disk) init() error {
 			return err
 		}
 
-		tableFile, err := NewTableFile(tableName, filePtr)
+		tableFile, err := newTableFile(tableName, filePtr)
 		if err != nil {
 			return err
 		}
