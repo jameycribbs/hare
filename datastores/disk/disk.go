@@ -10,6 +10,7 @@ import (
 var (
 	ErrNoTable     = errors.New("disk: no table with that name found")
 	ErrTableExists = errors.New("disk: table with that name already exists")
+	ErrIDExists    = errors.New("disk: record with that id already exists")
 )
 
 type Disk struct {
@@ -100,6 +101,13 @@ func (dsk *Disk) InsertRec(tableName string, id int, rec []byte) error {
 	tableFile, err := dsk.getTableFile(tableName)
 	if err != nil {
 		return err
+	}
+
+	ids := tableFile.ids()
+	for _, i := range ids {
+		if id == i {
+			return ErrIDExists
+		}
 	}
 
 	offset, err := tableFile.offsetForWritingRec(len(rec))

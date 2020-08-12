@@ -30,6 +30,8 @@ func newTestTableFile(t *testing.T) *tableFile {
 }
 
 func testSetup(t *testing.T) {
+	testRemoveFiles(t)
+
 	cmd := exec.Command("cp", "./testdata/contacts.bak", "./testdata/contacts.json")
 	if err := cmd.Run(); err != nil {
 		t.Fatal(err)
@@ -37,7 +39,16 @@ func testSetup(t *testing.T) {
 }
 
 func testTeardown(t *testing.T) {
-	if err := os.Remove("./testdata/contacts.json"); err != nil {
-		t.Fatal(err)
+	testRemoveFiles(t)
+}
+
+func testRemoveFiles(t *testing.T) {
+	filesToRemove := []string{"contacts.json", "newtable.json"}
+
+	for _, f := range filesToRemove {
+		err := os.Remove("./testdata/" + f)
+		if err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
 	}
 }

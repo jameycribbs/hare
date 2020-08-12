@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"testing"
 )
@@ -66,7 +67,7 @@ func TestAllDiskTests(t *testing.T) {
 			//CreateTable...
 
 			if _, err := os.Stat("./testdata/newtable.json"); err == nil {
-				t.Fatal("File already exists for dsk.CreateTable test!!!")
+				t.Fatal("file already exists for dsk.CreateTable test")
 
 			}
 
@@ -90,6 +91,112 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
+			//DeleteRec...
+
+			dsk := newTestDisk(t)
+			defer dsk.Close()
+
+			err := dsk.DeleteRec("contacts", 3)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := ErrNoRecord
+			_, got := dsk.ReadRec("contacts", 3)
+
+			if !errors.Is(got, want) {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//GetLastID...
+
+			dsk := newTestDisk(t)
+			defer dsk.Close()
+
+			want := 4
+			got, err := dsk.GetLastID("contacts")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//IDs...
+
+			dsk := newTestDisk(t)
+			defer dsk.Close()
+
+			want := []int{1, 2, 3, 4}
+			got, err := dsk.IDs("contacts")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			sort.Ints(got)
+
+			if len(want) != len(got) {
+				t.Errorf("want %v; got %v", want, got)
+			} else {
+
+				for i := range want {
+					if want[i] != got[i] {
+						t.Errorf("want %v; got %v", want, got)
+					}
+				}
+			}
+		},
+		func(t *testing.T) {
+			//InsertRec...
+
+			dsk := newTestDisk(t)
+			defer dsk.Close()
+
+			err := dsk.InsertRec("contacts", 5, []byte(`{"id":5,"first_name":"Rex","last_name":"Stout","age":77}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rec, err := dsk.ReadRec("contacts", 5)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "{\"id\":5,\"first_name\":\"Rex\",\"last_name\":\"Stout\",\"age\":77}\n"
+			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//InsertRec (id already exists)...
+
+			dsk := newTestDisk(t)
+			defer dsk.Close()
+
+			wantErr := ErrIDExists
+			gotErr := dsk.InsertRec("contacts", 3, []byte(`{"id":3,"first_name":"Rex","last_name":"Stout","age":77}`))
+			if !errors.Is(gotErr, wantErr) {
+				t.Errorf("want %v; got %v", wantErr, gotErr)
+			}
+
+			rec, err := dsk.ReadRec("contacts", 3)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "{\"id\":3,\"first_name\":\"Bill\",\"last_name\":\"Shakespeare\",\"age\":18}\n"
+			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
 			//ReadRec...
 
 			dsk := newTestDisk(t)
@@ -102,6 +209,33 @@ func TestAllDiskTests(t *testing.T) {
 
 			want := "{\"id\":3,\"first_name\":\"Bill\",\"last_name\":\"Shakespeare\",\"age\":18}\n"
 			got := string(rec)
+
+			if want != got {
+				t.Errorf("want %v; got %v", want, got)
+			}
+		},
+		func(t *testing.T) {
+			//RemoveTable...
+
+			if _, err := os.Stat("./testdata/contacts.json"); err != nil {
+				t.Fatal(err)
+
+			}
+
+			dsk := newTestDisk(t)
+			defer dsk.Close()
+
+			err := dsk.RemoveTable("contacts")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if _, err := os.Stat("./testdata/contacts.json"); !os.IsNotExist(err) {
+				t.Errorf("want %v; got %v", os.ErrNotExist, err)
+			}
+
+			want := false
+			got := dsk.TableExists("contacts")
 
 			if want != got {
 				t.Errorf("want %v; got %v", want, got)
