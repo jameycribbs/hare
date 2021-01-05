@@ -118,7 +118,6 @@ func (db *Database) DropTable(tableName string) error {
 	}
 
 	db.locks[tableName].Lock()
-	defer db.locks[tableName].Unlock()
 
 	if err := db.store.RemoveTable(tableName); err != nil {
 		db.locks[tableName].Unlock()

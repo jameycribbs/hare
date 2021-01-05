@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrNoTable     = errors.New("disk: no table with that name found")
+	ErrNoTable     = errors.New("disk: table with that name does not exist")
 	ErrTableExists = errors.New("disk: table with that name already exists")
 	ErrIDExists    = errors.New("disk: record with that id already exists")
 )
@@ -268,7 +268,7 @@ func (dsk Disk) openFile(tableName string, createIfNeeded bool) (*os.File, error
 func (dsk *Disk) closeTable(tableName string) error {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return errors.New("table does not exist")
+		return ErrNoTable
 	}
 
 	if err := tableFile.close(); err != nil {
