@@ -142,6 +142,7 @@ to create a new table or delete an existing table.
 * The database is not read into memory, but is queried from disk, so
   no need to worry about a large dataset filling up memory.
 
+* Two different back-end datastores to choose from:  disk or ram.
 
 ## Example Web App
 
