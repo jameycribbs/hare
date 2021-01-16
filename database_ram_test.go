@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/jameycribbs/hare/datastores/disk"
 	"github.com/jameycribbs/hare/datastores/ram"
+	"github.com/jameycribbs/hare/hare_err"
 )
 
 func TestAllDatabaseRamTests(t *testing.T) {
@@ -39,7 +39,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			db.Close()
 
-			wantErr := ErrNoTable
+			wantErr := hare_err.NoTable
 			gotErr := db.Find("contacts", 3, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -85,7 +85,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := ErrTableExists
+			wantErr := hare_err.TableExists
 			gotErr := db.CreateTable("contacts")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -103,7 +103,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			wantErr := disk.ErrNoRecord
+			wantErr := hare_err.NoRecord
 			gotErr := db.Find("contacts", 3, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -116,7 +116,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := ErrNoTable
+			wantErr := hare_err.NoTable
 			gotErr := db.Delete("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -147,7 +147,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := ErrNoTable
+			wantErr := hare_err.NoTable
 			gotErr := db.DropTable("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -180,7 +180,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := disk.ErrNoRecord
+			wantErr := hare_err.NoRecord
 			gotErr := db.Find("contacts", 5, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -218,7 +218,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := ErrNoTable
+			wantErr := hare_err.NoTable
 			_, gotErr := db.IDs("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -261,7 +261,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := ErrNoTable
+			wantErr := hare_err.NoTable
 			_, gotErr := db.Insert("nonexistent", &Contact{FirstName: "Robin", LastName: "Williams", Age: 88})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -319,7 +319,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 			db := newTestDatabaseRam(t)
 			defer db.Close()
 
-			wantErr := ErrNoTable
+			wantErr := hare_err.NoTable
 			gotErr := db.Update("nonexistent", &Contact{ID: 4, FirstName: "Hazel", LastName: "Koller", Age: 26})
 
 			if !errors.Is(gotErr, wantErr) {

@@ -4,13 +4,9 @@ package hare
 
 import (
 	"encoding/json"
-	"errors"
 	"sync"
-)
 
-var (
-	ErrNoTable     = errors.New("hare: no table with that name found")
-	ErrTableExists = errors.New("hare: table with that name already exists")
+	"github.com/jameycribbs/hare/hare_err"
 )
 
 type Record interface {
@@ -79,7 +75,7 @@ func (db *Database) Close() error {
 
 func (db *Database) CreateTable(tableName string) error {
 	if db.TableExists(tableName) {
-		return ErrTableExists
+		return hare_err.TableExists
 	}
 
 	if err := db.store.CreateTable(tableName); err != nil {
@@ -99,7 +95,7 @@ func (db *Database) CreateTable(tableName string) error {
 
 func (db *Database) Delete(tableName string, id int) error {
 	if !db.TableExists(tableName) {
-		return ErrNoTable
+		return hare_err.NoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -114,7 +110,7 @@ func (db *Database) Delete(tableName string, id int) error {
 
 func (db *Database) DropTable(tableName string) error {
 	if !db.TableExists(tableName) {
-		return ErrNoTable
+		return hare_err.NoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -135,7 +131,7 @@ func (db *Database) DropTable(tableName string) error {
 
 func (db *Database) Find(tableName string, id int, rec Record) error {
 	if !db.TableExists(tableName) {
-		return ErrNoTable
+		return hare_err.NoTable
 	}
 
 	db.locks[tableName].RLock()
@@ -158,7 +154,7 @@ func (db *Database) Find(tableName string, id int, rec Record) error {
 
 func (db *Database) IDs(tableName string) ([]int, error) {
 	if !db.TableExists(tableName) {
-		return nil, ErrNoTable
+		return nil, hare_err.NoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -174,7 +170,7 @@ func (db *Database) IDs(tableName string) ([]int, error) {
 
 func (db *Database) Insert(tableName string, rec Record) (int, error) {
 	if !db.TableExists(tableName) {
-		return 0, ErrNoTable
+		return 0, hare_err.NoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -203,7 +199,7 @@ func (db *Database) TableExists(tableName string) bool {
 
 func (db *Database) Update(tableName string, rec Record) error {
 	if !db.TableExists(tableName) {
-		return ErrNoTable
+		return hare_err.NoTable
 	}
 
 	db.locks[tableName].Lock()

@@ -3,16 +3,13 @@ package disk
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
+
+	"github.com/jameycribbs/hare/hare_err"
 )
 
 const dummyRune = 'X'
-
-var (
-	ErrNoRecord = errors.New("hare: no record with that id found")
-)
 
 type tableFile struct {
 	ptr     *os.File
@@ -80,7 +77,7 @@ func (t *tableFile) close() error {
 func (t *tableFile) deleteRec(id int) error {
 	offset, ok := t.offsets[id]
 	if !ok {
-		return ErrNoRecord
+		return hare_err.NoRecord
 	}
 
 	rec, err := t.readRec(id)
@@ -207,7 +204,7 @@ func (t *tableFile) overwriteRec(offset int64, recLen int) error {
 func (t *tableFile) readRec(id int) ([]byte, error) {
 	offset, ok := t.offsets[id]
 	if !ok {
-		return nil, ErrNoRecord
+		return nil, hare_err.NoRecord
 	}
 
 	r := bufio.NewReader(t.ptr)
@@ -229,7 +226,7 @@ func (t *tableFile) updateRec(id int, rec []byte) error {
 
 	oldRecOffset, ok := t.offsets[id]
 	if !ok {
-		return ErrNoRecord
+		return hare_err.NoRecord
 	}
 
 	oldRec, err := t.readRec(id)

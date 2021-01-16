@@ -1,16 +1,11 @@
 package disk
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"strings"
-)
 
-var (
-	ErrNoTable     = errors.New("disk: table with that name does not exist")
-	ErrTableExists = errors.New("disk: table with that name already exists")
-	ErrIDExists    = errors.New("disk: record with that id already exists")
+	"github.com/jameycribbs/hare/hare_err"
 )
 
 type Disk struct {
@@ -48,7 +43,7 @@ func (dsk *Disk) Close() error {
 
 func (dsk *Disk) CreateTable(tableName string) error {
 	if dsk.TableExists(tableName) {
-		return ErrTableExists
+		return hare_err.TableExists
 	}
 
 	filePtr, err := dsk.openFile(tableName, true)
@@ -106,7 +101,7 @@ func (dsk *Disk) InsertRec(tableName string, id int, rec []byte) error {
 	ids := tableFile.ids()
 	for _, i := range ids {
 		if id == i {
-			return ErrIDExists
+			return hare_err.IDExists
 		}
 	}
 
@@ -191,7 +186,7 @@ func (dsk *Disk) UpdateRec(tableName string, id int, rec []byte) error {
 func (dsk *Disk) getTableFile(tableName string) (*tableFile, error) {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return nil, ErrNoTable
+		return nil, hare_err.NoTable
 	}
 
 	return tableFile, nil
@@ -268,7 +263,7 @@ func (dsk Disk) openFile(tableName string, createIfNeeded bool) (*os.File, error
 func (dsk *Disk) closeTable(tableName string) error {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return ErrNoTable
+		return hare_err.NoTable
 	}
 
 	if err := tableFile.close(); err != nil {

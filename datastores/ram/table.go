@@ -1,5 +1,7 @@
 package ram
 
+import "github.com/jameycribbs/hare/hare_err"
+
 type table struct {
 	records map[int][]byte
 }
@@ -14,7 +16,7 @@ func newTable() *table {
 
 func (t *table) deleteRec(id int) error {
 	if !t.recExists(id) {
-		return ErrNoRecord
+		return hare_err.NoRecord
 	}
 
 	delete(t.records, id)
@@ -49,7 +51,7 @@ func (t *table) ids() []int {
 func (t *table) readRec(id int) ([]byte, error) {
 	rec, ok := t.records[id]
 	if !ok {
-		return nil, ErrNoRecord
+		return nil, hare_err.NoRecord
 	}
 
 	return rec, nil

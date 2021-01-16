@@ -1,15 +1,6 @@
 package ram
 
-import (
-	"errors"
-)
-
-var (
-	ErrNoTable      = errors.New("hare: table with that name does not exist")
-	ErrTableExists  = errors.New("hare: table with that name already exists")
-	ErrNoRecord     = errors.New("hare: record with that id does not exist")
-	ErrRecordExists = errors.New("hare: record with that id already exists")
-)
+import "github.com/jameycribbs/hare/hare_err"
 
 type Ram struct {
 	tables map[string]*table
@@ -33,7 +24,7 @@ func (ram *Ram) Close() error {
 
 func (ram *Ram) CreateTable(tableName string) error {
 	if ram.TableExists(tableName) {
-		return ErrTableExists
+		return hare_err.TableExists
 	}
 
 	ram.tables[tableName] = newTable()
@@ -79,7 +70,7 @@ func (ram *Ram) InsertRec(tableName string, id int, rec []byte) error {
 	}
 
 	if table.recExists(id) {
-		return ErrRecordExists
+		return hare_err.IDExists
 	}
 
 	table.writeRec(id, rec)
@@ -103,7 +94,7 @@ func (ram *Ram) ReadRec(tableName string, id int) ([]byte, error) {
 
 func (ram *Ram) RemoveTable(tableName string) error {
 	if !ram.TableExists(tableName) {
-		return ErrNoTable
+		return hare_err.NoTable
 	}
 
 	delete(ram.tables, tableName)
@@ -134,7 +125,7 @@ func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 	}
 
 	if !table.recExists(id) {
-		return ErrNoRecord
+		return hare_err.NoRecord
 	}
 
 	table.writeRec(id, rec)
@@ -149,7 +140,7 @@ func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 func (ram *Ram) getTable(tableName string) (*table, error) {
 	table, ok := ram.tables[tableName]
 	if !ok {
-		return nil, ErrNoTable
+		return nil, hare_err.NoTable
 	}
 
 	return table, nil
