@@ -4,36 +4,31 @@ import (
 	"fmt"
 
 	"github.com/jameycribbs/hare"
+	"github.com/jameycribbs/hare/datastores/disk"
 )
 
 func main() {
-	// Open the database and return a handle to it.
-	db, err := hare.OpenDB("./data")
+	ds, err := disk.New("./data", ".json")
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := hare.New(ds)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
+	// Here is how to create a new table in the database.
+	err = db.CreateTable("contacts")
+	if err != nil {
+		panic(err)
+	}
+
 	// Here is how to check if a table exists in your database.
 	if !db.TableExists("contacts") {
 		fmt.Println("Table 'contacts' does not exist!")
 	}
-
-	// Here is how to create a new table in the database and get back a
-	// handle to it.
-	tbl, err := db.CreateTable("contacts")
-	if err != nil {
-		panic(err)
-	}
-
-	// If the table already exists, you can get a handle to it by
-	// calling GetTable.
-	tbl, err = db.GetTable("contacts")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Table handle:", tbl)
 
 	// Here is how to drop a table.
 	err = db.DropTable("contacts")
