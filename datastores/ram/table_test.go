@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+
+	"github.com/jameycribbs/hare/dberr"
 )
 
 func TestAllTableTests(t *testing.T) {
@@ -37,7 +39,7 @@ func TestAllTableTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			wantErr := ErrNoRecord
+			wantErr := dberr.NoRecord
 			_, gotErr := tbl.readRec(3)
 			if !errors.Is(gotErr, wantErr) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)

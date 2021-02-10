@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/jameycribbs/hare/datastores/disk"
-	"github.com/jameycribbs/hare/hare_err"
+	"github.com/jameycribbs/hare/dberr"
 )
 
 func TestAllDatabaseDiskTests(t *testing.T) {
@@ -41,7 +41,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			db.Close()
 
-			wantErr := hare_err.NoTable
+			wantErr := dberr.NoTable
 			gotErr := db.Find("contacts", 3, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -82,12 +82,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//CreateTable (ErrTableExists)...
+			//CreateTable (TableExists error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.TableExists
+			wantErr := dberr.TableExists
 			gotErr := db.CreateTable("contacts")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -105,7 +105,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			wantErr := hare_err.NoRecord
+			wantErr := dberr.NoRecord
 			gotErr := db.Find("contacts", 3, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -113,12 +113,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//Delete (ErrNoTable)...
+			//Delete (NoTable error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.NoTable
+			wantErr := dberr.NoTable
 			gotErr := db.Delete("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -144,12 +144,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//DropTable (ErrNoTable)...
+			//DropTable (NoTable error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.NoTable
+			wantErr := dberr.NoTable
 			gotErr := db.DropTable("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -177,12 +177,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//Find (ErrNoRecord)...
+			//Find (NoRecord error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.NoRecord
+			wantErr := dberr.NoRecord
 			gotErr := db.Find("contacts", 5, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -215,12 +215,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//IDs() (ErrNoTable)...
+			//IDs() (NoTable error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.NoTable
+			wantErr := dberr.NoTable
 			_, gotErr := db.IDs("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -258,12 +258,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//Insert (ErrNoTable)...
+			//Insert (NoTable error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.NoTable
+			wantErr := dberr.NoTable
 			_, gotErr := db.Insert("nonexistent", &Contact{FirstName: "Robin", LastName: "Williams", Age: 88})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -316,12 +316,12 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//Update (ErrNoTable)...
+			//Update (NoTable error)...
 
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := hare_err.NoTable
+			wantErr := dberr.NoTable
 			gotErr := db.Update("nonexistent", &Contact{ID: 4, FirstName: "Hazel", LastName: "Koller", Age: 26})
 
 			if !errors.Is(gotErr, wantErr) {

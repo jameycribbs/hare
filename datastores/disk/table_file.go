@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/jameycribbs/hare/hare_err"
+	"github.com/jameycribbs/hare/dberr"
 )
 
 const dummyRune = 'X'
@@ -77,7 +77,7 @@ func (t *tableFile) close() error {
 func (t *tableFile) deleteRec(id int) error {
 	offset, ok := t.offsets[id]
 	if !ok {
-		return hare_err.NoRecord
+		return dberr.NoRecord
 	}
 
 	rec, err := t.readRec(id)
@@ -204,7 +204,7 @@ func (t *tableFile) overwriteRec(offset int64, recLen int) error {
 func (t *tableFile) readRec(id int) ([]byte, error) {
 	offset, ok := t.offsets[id]
 	if !ok {
-		return nil, hare_err.NoRecord
+		return nil, dberr.NoRecord
 	}
 
 	r := bufio.NewReader(t.ptr)
@@ -226,7 +226,7 @@ func (t *tableFile) updateRec(id int, rec []byte) error {
 
 	oldRecOffset, ok := t.offsets[id]
 	if !ok {
-		return hare_err.NoRecord
+		return dberr.NoRecord
 	}
 
 	oldRec, err := t.readRec(id)

@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jameycribbs/hare/hare_err"
+	"github.com/jameycribbs/hare/dberr"
 )
 
 type Disk struct {
@@ -43,7 +43,7 @@ func (dsk *Disk) Close() error {
 
 func (dsk *Disk) CreateTable(tableName string) error {
 	if dsk.TableExists(tableName) {
-		return hare_err.TableExists
+		return dberr.TableExists
 	}
 
 	filePtr, err := dsk.openFile(tableName, true)
@@ -101,7 +101,7 @@ func (dsk *Disk) InsertRec(tableName string, id int, rec []byte) error {
 	ids := tableFile.ids()
 	for _, i := range ids {
 		if id == i {
-			return hare_err.IDExists
+			return dberr.IDExists
 		}
 	}
 
@@ -186,7 +186,7 @@ func (dsk *Disk) UpdateRec(tableName string, id int, rec []byte) error {
 func (dsk *Disk) getTableFile(tableName string) (*tableFile, error) {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return nil, hare_err.NoTable
+		return nil, dberr.NoTable
 	}
 
 	return tableFile, nil
@@ -263,7 +263,7 @@ func (dsk Disk) openFile(tableName string, createIfNeeded bool) (*os.File, error
 func (dsk *Disk) closeTable(tableName string) error {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return hare_err.NoTable
+		return dberr.NoTable
 	}
 
 	if err := tableFile.close(); err != nil {

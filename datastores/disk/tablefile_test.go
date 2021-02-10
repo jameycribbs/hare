@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+
+	"github.com/jameycribbs/hare/dberr"
 )
 
 func TestAllTableFileTests(t *testing.T) {
@@ -35,7 +37,7 @@ func TestAllTableFileTests(t *testing.T) {
 			tf := newTestTableFile(t)
 			tf.close()
 
-			wantErr := ErrNoRecord
+			wantErr := dberr.NoRecord
 			_, gotErr := tf.readRec(3)
 
 			if !errors.Is(gotErr, wantErr) {

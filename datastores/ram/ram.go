@@ -1,6 +1,6 @@
 package ram
 
-import "github.com/jameycribbs/hare/hare_err"
+import "github.com/jameycribbs/hare/dberr"
 
 type Ram struct {
 	tables map[string]*table
@@ -24,7 +24,7 @@ func (ram *Ram) Close() error {
 
 func (ram *Ram) CreateTable(tableName string) error {
 	if ram.TableExists(tableName) {
-		return hare_err.TableExists
+		return dberr.TableExists
 	}
 
 	ram.tables[tableName] = newTable()
@@ -70,7 +70,7 @@ func (ram *Ram) InsertRec(tableName string, id int, rec []byte) error {
 	}
 
 	if table.recExists(id) {
-		return hare_err.IDExists
+		return dberr.IDExists
 	}
 
 	table.writeRec(id, rec)
@@ -94,7 +94,7 @@ func (ram *Ram) ReadRec(tableName string, id int) ([]byte, error) {
 
 func (ram *Ram) RemoveTable(tableName string) error {
 	if !ram.TableExists(tableName) {
-		return hare_err.NoTable
+		return dberr.NoTable
 	}
 
 	delete(ram.tables, tableName)
@@ -125,7 +125,7 @@ func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 	}
 
 	if !table.recExists(id) {
-		return hare_err.NoRecord
+		return dberr.NoRecord
 	}
 
 	table.writeRec(id, rec)
@@ -140,7 +140,7 @@ func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 func (ram *Ram) getTable(tableName string) (*table, error) {
 	table, ok := ram.tables[tableName]
 	if !ok {
-		return nil, hare_err.NoTable
+		return nil, dberr.NoTable
 	}
 
 	return table, nil

@@ -1,4 +1,4 @@
-package hare_err
+package dberr
 
 import "errors"
 

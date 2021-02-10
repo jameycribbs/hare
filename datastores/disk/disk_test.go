@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+
+	"github.com/jameycribbs/hare/dberr"
 )
 
 func TestAllDiskTests(t *testing.T) {
@@ -51,7 +53,7 @@ func TestAllDiskTests(t *testing.T) {
 			dsk := newTestDisk(t)
 			dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			_, gotErr := dsk.ReadRec("contacts", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -92,12 +94,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//CreateTable (ErrTableExists)...
+			//CreateTable (TableExists error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrTableExists
+			wantErr := dberr.TableExists
 			gotErr := dsk.CreateTable("contacts")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -115,7 +117,7 @@ func TestAllDiskTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			want := ErrNoRecord
+			want := dberr.NoRecord
 			_, got := dsk.ReadRec("contacts", 3)
 
 			if !errors.Is(got, want) {
@@ -123,12 +125,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//DeleteRec (ErrNoTable)...
+			//DeleteRec (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			gotErr := dsk.DeleteRec("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -152,12 +154,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//GetLastID (ErrNoTable)...
+			//GetLastID (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			_, gotErr := dsk.GetLastID("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -190,12 +192,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//IDs (ErrNoTable)...
+			//IDs (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			_, gotErr := dsk.IDs("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -226,12 +228,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//InsertRec (ErrNoTable)...
+			//InsertRec (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			gotErr := dsk.InsertRec("nonexistent", 5, []byte(`{"id":5,"first_name":"Rex","last_name":"Stout","age":77}`))
 
 			if !errors.Is(gotErr, wantErr) {
@@ -239,12 +241,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//InsertRec (ErrIDExists)...
+			//InsertRec (IDExists error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrIDExists
+			wantErr := dberr.IDExists
 			gotErr := dsk.InsertRec("contacts", 3, []byte(`{"id":3,"first_name":"Rex","last_name":"Stout","age":77}`))
 			if !errors.Is(gotErr, wantErr) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
@@ -281,12 +283,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//ReadRec (ErrNoTable)...
+			//ReadRec (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			_, gotErr := dsk.ReadRec("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -321,12 +323,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//RemoveTable (ErrNoTable)...
+			//RemoveTable (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			gotErr := dsk.RemoveTable("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -399,12 +401,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//UpdateRec (ErrNoTable)...
+			//UpdateRec (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			gotErr := dsk.UpdateRec("nonexistent", 3, []byte(`{"id":3,"first_name":"William","last_name":"Shakespeare","age":77}`))
 
 			if !errors.Is(gotErr, wantErr) {
@@ -423,12 +425,12 @@ func TestAllDiskTests(t *testing.T) {
 			}
 		},
 		func(t *testing.T) {
-			//closeTable (ErrNoTable)...
+			//closeTable (NoTable error)...
 
 			dsk := newTestDisk(t)
 			defer dsk.Close()
 
-			wantErr := ErrNoTable
+			wantErr := dberr.NoTable
 			gotErr := dsk.closeTable("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
