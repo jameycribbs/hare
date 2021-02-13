@@ -16,8 +16,8 @@ type Episode struct {
 	YearFilmReleased int       `json:"year_film_released"`
 	DateEpisodeAired time.Time `json:"date_episode_aired"`
 	HostID           int       `json:"host_id"`
-	Host
-	Comments []Comment
+	Host                       // embeded struct of Host model
+	Comments         []Comment // array of Comment models
 }
 
 func (e *Episode) GetID() int {
