@@ -123,6 +123,19 @@ results, err := contacts.Query(func(c models.Contact) bool {
 ```
 
 
+#### Associations
+
+You can create associations (similar to "belongs_to" in Rails, but with less
+features).  For example, you would create another table called "relationships" with
+the fields "id" and "type" (i.e. "Spouse", "Sister", "Co-worker", etc.).  Next,
+you would add a "relationship_id" field to the contacts table and you would also add
+an embeded Relationship struct.  Finally, in the Contact models "AfterFind" method,
+which is automatically called by Hare everytime the "Find" method is executed, you
+would add code to look-up the associated relationship and populate an embedded
+Relationship struct.  Take a look at the crud.go file in the "examples" directory
+for an example of how this is done.
+
+
 #### Database Administration
 
 There are also built-in methods you can run against the database

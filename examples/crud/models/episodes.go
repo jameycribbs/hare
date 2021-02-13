@@ -15,7 +15,8 @@ type Episode struct {
 	Shorts           []string  `json:"shorts"`
 	YearFilmReleased int       `json:"year_film_released"`
 	DateEpisodeAired time.Time `json:"date_episode_aired"`
-	Host             string    `json:"host"`
+	HostID           int       `json:"host_id"`
+	Host
 }
 
 func (episode *Episode) GetID() int {
@@ -26,8 +27,19 @@ func (episode *Episode) SetID(id int) {
 	episode.ID = id
 }
 
-func (episode *Episode) AfterFind() {
+func (episode *Episode) AfterFind(db *hare.Database) {
 	*episode = Episode(*episode)
+
+	// This is an example of how you can do Rails-like associations.
+	// When an episode is found, this code will run and lookup the
+	// associated host record then populate the embedded Host
+	// struct.
+	host := Host{}
+	err := db.Find("mst3k_hosts", episode.HostID, &host)
+
+	if err == nil {
+		episode.Host = host
+	}
 }
 
 func QueryEpisodes(db *hare.Database, queryFn func(episode Episode) bool, limit int) ([]Episode, error) {

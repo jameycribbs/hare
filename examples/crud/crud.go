@@ -31,7 +31,7 @@ func main() {
 		Shorts:           []string{"Speech:  Platform, Posture, and Appearance"},
 		YearFilmReleased: 1966,
 		DateEpisodeAired: time.Date(1994, 12, 17, 0, 0, 0, 0, time.UTC),
-		Host:             "Mike",
+		HostID:           2, // See associated Host model
 	})
 
 	if err != nil {
@@ -49,7 +49,9 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Found record is:", rec.Film)
+	// Notice that this is using the benefits of the associated
+	// Host model to print the host's name.
+	fmt.Printf("Found record is %v and it was hosted by %v\n", rec.Film, rec.Host.Name)
 
 	//----- UPDATE -----
 
@@ -68,7 +70,11 @@ func main() {
 	//----- QUERYING -----
 
 	results, err := models.QueryEpisodes(db, func(r models.Episode) bool {
-		return r.Host == "Joel"
+		// Notice that we are taking advantage of the
+		// code we put in the Episode AfterFind method
+		// to be able to do the query by the associated
+		// host's name.
+		return r.Host.Name == "Joel"
 	}, 0)
 	if err != nil {
 		panic(err)
