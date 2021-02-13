@@ -152,15 +152,26 @@ to create a new table or delete an existing table.
 
 * Querying is done using Go itself.  No need to use a DSL.
 
+* Automatic callback is run everytime a record is read, allowing you
+  to do creative things like auto-populate associations, etc.
+  
 * The database is not read into memory, but is queried from disk, so
   no need to worry about a large dataset filling up memory.
 
 * Two different back-end datastores to choose from:  disk or ram.
 
-## Example Web App
+## Example Web Apps
 
 [SnippetBox using Hare](https://www.github.com/jameycribbs/snippetbox_hare)
 This is a version of the SnippetBox web application featured in Alex
 Edward's outstanding book, [Let's Go](https://lets-go.alexedwards.net/),
 with Hare replacing MySQL as the DBMS.  This is just a demonstration,
 mainly to show how you could use Hare in a web application.
+
+[Mule](https://www.github.com/jameycribbs/mule)
+This is a simple web app that tracks expenses and possibly more.  It is
+a WORK IN PROGRESS!  I plan on adding other features like a simple
+calendaring function.  I have attempted to follow best practices from
+the Let's Go book, but I am also structuring it to be more expandable
+by separating the handlers, routes, templates, models into separate
+packages rather than having everything be in the same package.
