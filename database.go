@@ -38,6 +38,8 @@ type Database struct {
 	lastIDs map[string]int
 }
 
+// New takes a datastorage and returns a pointer to a
+// Database struct.
 func New(ds datastorage) (*Database, error) {
 	db := &Database{store: ds}
 	db.locks = make(map[string]*sync.RWMutex)

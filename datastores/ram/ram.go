@@ -2,10 +2,14 @@ package ram
 
 import "github.com/jameycribbs/hare/dberr"
 
+// Ram is a struct that holds a map of all the
+// tables in the datastore.
 type Ram struct {
 	tables map[string]*table
 }
 
+// NewRam takes a map of maps with seed data
+// and returns a pointer to a Ram struct.
 func NewRam(seedData map[string]map[int]string) (*Ram, error) {
 	var ram Ram
 
@@ -16,12 +20,15 @@ func NewRam(seedData map[string]map[int]string) (*Ram, error) {
 	return &ram, nil
 }
 
+// Close closes the datastore.
 func (ram *Ram) Close() error {
 	ram.tables = nil
 
 	return nil
 }
 
+// CreateTable takes a table name, creates a new table
+// and adds it to the map of tables in the datastore.
 func (ram *Ram) CreateTable(tableName string) error {
 	if ram.TableExists(tableName) {
 		return dberr.TableExists
@@ -32,6 +39,8 @@ func (ram *Ram) CreateTable(tableName string) error {
 	return nil
 }
 
+// DeleteRec takes a table name and a record id and deletes
+// the associated record.
 func (ram *Ram) DeleteRec(tableName string, id int) error {
 	table, err := ram.getTable(tableName)
 	if err != nil {
@@ -45,6 +54,8 @@ func (ram *Ram) DeleteRec(tableName string, id int) error {
 	return nil
 }
 
+// GetLastID takes a table name and returns the greatest record
+// id found in the table.
 func (ram *Ram) GetLastID(tableName string) (int, error) {
 	table, err := ram.getTable(tableName)
 	if err != nil {
@@ -54,6 +65,8 @@ func (ram *Ram) GetLastID(tableName string) (int, error) {
 	return table.getLastID(), nil
 }
 
+// IDs takes a table name and returns an array of all record IDs
+// found in the table.
 func (ram *Ram) IDs(tableName string) ([]int, error) {
 	table, err := ram.getTable(tableName)
 	if err != nil {
@@ -63,6 +76,8 @@ func (ram *Ram) IDs(tableName string) ([]int, error) {
 	return table.ids(), nil
 }
 
+// InsertRec takes a table name, a record id, and a byte array and adds
+// the record to the table.
 func (ram *Ram) InsertRec(tableName string, id int, rec []byte) error {
 	table, err := ram.getTable(tableName)
 	if err != nil {
@@ -78,6 +93,8 @@ func (ram *Ram) InsertRec(tableName string, id int, rec []byte) error {
 	return nil
 }
 
+// ReadRec takes a table name and an id, reads the record from the
+// table, and returns a populated byte array.
 func (ram *Ram) ReadRec(tableName string, id int) ([]byte, error) {
 	table, err := ram.getTable(tableName)
 	if err != nil {
@@ -92,6 +109,8 @@ func (ram *Ram) ReadRec(tableName string, id int) ([]byte, error) {
 	return rec, err
 }
 
+// RemoveTable takes a table name and deletes that table from the
+// datastore.
 func (ram *Ram) RemoveTable(tableName string) error {
 	if !ram.TableExists(tableName) {
 		return dberr.NoTable
@@ -102,12 +121,15 @@ func (ram *Ram) RemoveTable(tableName string) error {
 	return nil
 }
 
+// TableExists takes a table name and returns a bool indicating
+// whether or not the table exists in the datastore.
 func (ram *Ram) TableExists(tableName string) bool {
 	_, ok := ram.tables[tableName]
 
 	return ok
 }
 
+// TableNames returns an array of table names.
 func (ram *Ram) TableNames() []string {
 	var names []string
 
@@ -118,6 +140,8 @@ func (ram *Ram) TableNames() []string {
 	return names
 }
 
+// UpdateRec takes a table name, a record id, and a byte array and updates
+// the table record with that id.
 func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 	table, err := ram.getTable(tableName)
 	if err != nil {
