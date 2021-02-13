@@ -9,6 +9,8 @@ import (
 	"github.com/jameycribbs/hare/dberr"
 )
 
+// Record interface defines the methods a struct representing
+// a table record must implement.
 type Record interface {
 	SetID(int)
 	GetID() int
@@ -29,6 +31,7 @@ type datastorage interface {
 	UpdateRec(string, int, []byte) error
 }
 
+// Database struct is the main struct for the Hare package.
 type Database struct {
 	store   datastorage
 	locks   map[string]*sync.RWMutex
@@ -53,6 +56,7 @@ func New(ds datastorage) (*Database, error) {
 	return db, nil
 }
 
+// Close closes the associated datastore.
 func (db *Database) Close() error {
 	for _, lock := range db.locks {
 		lock.Lock()
@@ -73,6 +77,8 @@ func (db *Database) Close() error {
 	return nil
 }
 
+// CreateTable takes a table name and creates and
+// initializes a new table.
 func (db *Database) CreateTable(tableName string) error {
 	if db.TableExists(tableName) {
 		return dberr.TableExists
@@ -93,6 +99,8 @@ func (db *Database) CreateTable(tableName string) error {
 	return nil
 }
 
+// Delete takes a table name and record id and removes that
+// record from the database.
 func (db *Database) Delete(tableName string, id int) error {
 	if !db.TableExists(tableName) {
 		return dberr.NoTable
@@ -108,6 +116,7 @@ func (db *Database) Delete(tableName string, id int) error {
 	return nil
 }
 
+// DropTable takes a table name and deletes the table.
 func (db *Database) DropTable(tableName string) error {
 	if !db.TableExists(tableName) {
 		return dberr.NoTable
@@ -129,6 +138,9 @@ func (db *Database) DropTable(tableName string) error {
 	return nil
 }
 
+// Find takes a table name, a record id, and a pointer to a struct that
+// implements the Record interface, finds the associated record from the
+// table, and populates the struct.
 func (db *Database) Find(tableName string, id int, rec Record) error {
 	if !db.TableExists(tableName) {
 		return dberr.NoTable
@@ -152,6 +164,8 @@ func (db *Database) Find(tableName string, id int, rec Record) error {
 	return nil
 }
 
+// IDs takes a table name and returns a list of all record ids for
+// that table.
 func (db *Database) IDs(tableName string) ([]int, error) {
 	if !db.TableExists(tableName) {
 		return nil, dberr.NoTable
@@ -168,6 +182,9 @@ func (db *Database) IDs(tableName string) ([]int, error) {
 	return ids, err
 }
 
+// Insert takes a table name and a struct that implements the Record
+// interface and adds a new record to the table.  It returns the
+// new record's id.
 func (db *Database) Insert(tableName string, rec Record) (int, error) {
 	if !db.TableExists(tableName) {
 		return 0, dberr.NoTable
@@ -197,6 +214,9 @@ func (db *Database) TableExists(tableName string) bool {
 	return db.tableExists(tableName) && db.store.TableExists(tableName)
 }
 
+// Update takes a table name and a struct that implements the Record
+// interface and updates the record in the table that has that record's
+// id.
 func (db *Database) Update(tableName string, rec Record) error {
 	if !db.TableExists(tableName) {
 		return dberr.NoTable
