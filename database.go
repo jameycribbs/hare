@@ -14,7 +14,7 @@ import (
 type Record interface {
 	SetID(int)
 	GetID() int
-	AfterFind(*Database)
+	AfterFind(*Database) error
 }
 
 type datastorage interface {
@@ -161,7 +161,10 @@ func (db *Database) Find(tableName string, id int, rec Record) error {
 		return err
 	}
 
-	rec.AfterFind(db)
+	err = rec.AfterFind(db)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

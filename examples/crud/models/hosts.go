@@ -18,15 +18,19 @@ func (h *Host) SetID(id int) {
 	h.ID = id
 }
 
-func (h *Host) AfterFind(db *hare.Database) {
+func (h *Host) AfterFind(db *hare.Database) error {
+	// IMPORTANT!!!  This line of code is necessary in your AfterFind
+	//               in order for the Find method to work correctly!
 	*h = Host(*h)
+
+	return nil
 }
 
 func QueryHosts(db *hare.Database, queryFn func(host Host) bool, limit int) ([]Host, error) {
 	var results []Host
 	var err error
 
-	ids, err := db.IDs("mst3k_hosts")
+	ids, err := db.IDs("hosts")
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +38,7 @@ func QueryHosts(db *hare.Database, queryFn func(host Host) bool, limit int) ([]H
 	for _, id := range ids {
 		host := Host{}
 
-		if err = db.Find("mst3k_hosts", id, &host); err != nil {
+		if err = db.Find("hosts", id, &host); err != nil {
 			return nil, err
 		}
 

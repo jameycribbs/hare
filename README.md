@@ -135,6 +135,9 @@ would add code to look-up the associated relationship and populate an embedded
 Relationship struct.  Take a look at the crud.go file in the "examples" directory
 for an example of how this is done.
 
+You can also mimic a "has_many" association, using a similar technique.  Take a
+look at the crud example for how to do that.
+
 
 #### Database Administration
 

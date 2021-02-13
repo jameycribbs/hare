@@ -24,7 +24,7 @@ func main() {
 
 	//----- CREATE -----
 
-	recID, err := db.Insert("mst3k_episodes", &models.Episode{
+	recID, err := db.Insert("episodes", &models.Episode{
 		Season:           6,
 		Episode:          19,
 		Film:             "Red Zone Cuba",
@@ -44,7 +44,7 @@ func main() {
 
 	rec := models.Episode{}
 
-	err = db.Find("mst3k_episodes", 4, &rec)
+	err = db.Find("episodes", 4, &rec)
 	if err != nil {
 		panic(err)
 	}
@@ -56,13 +56,13 @@ func main() {
 	//----- UPDATE -----
 
 	rec.Film = "The Skydivers - The Final Cut"
-	if err = db.Update("mst3k_episodes", &rec); err != nil {
+	if err = db.Update("episodes", &rec); err != nil {
 		panic(err)
 	}
 
 	//----- DELETE -----
 
-	err = db.Delete("mst3k_episodes", 2)
+	err = db.Delete("episodes", 2)
 	if err != nil {
 		panic(err)
 	}
@@ -81,12 +81,21 @@ func main() {
 	}
 
 	for _, r := range results {
-		fmt.Printf("Joel hosted the season %v episode %v film, '%v'\n", r.Season, r.Episode, r.Film)
+		// Again, we are able to automatically use the host's name, because the
+		// embedd Host struct was populated in the AfterFind method.
+		fmt.Printf("%v hosted the season %v episode %v film, '%v'\n", r.Host.Name, r.Season, r.Episode, r.Film)
+
+		// Here we are once again taking advantage of the code we put in the Episode
+		// AfterFind method that automatically populates the episode's Comments struct
+		// with associated records from the comments table.
+		for _, c := range r.Comments {
+			fmt.Printf("\t-- Comment for episode %v: %v\n", r.Episode, c.Text)
+		}
 	}
 }
 
 func init() {
-	cmd := exec.Command("cp", "./data/mst3k_episodes_default.txt", "./data/mst3k_episodes.json")
+	cmd := exec.Command("cp", "./data/episodes_default.txt", "./data/episodes.json")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}

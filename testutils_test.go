@@ -15,6 +15,8 @@ func (c *Contact) SetID(id int) {
 	c.ID = id
 }
 
-func (c *Contact) AfterFind(db *Database) {
+func (c *Contact) AfterFind(db *Database) error {
 	*c = Contact(*c)
+
+	return nil
 }

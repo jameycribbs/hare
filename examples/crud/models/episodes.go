@@ -17,6 +17,7 @@ type Episode struct {
 	DateEpisodeAired time.Time `json:"date_episode_aired"`
 	HostID           int       `json:"host_id"`
 	Host
+	Comments []Comment
 }
 
 func (episode *Episode) GetID() int {
@@ -27,7 +28,9 @@ func (episode *Episode) SetID(id int) {
 	episode.ID = id
 }
 
-func (episode *Episode) AfterFind(db *hare.Database) {
+func (episode *Episode) AfterFind(db *hare.Database) error {
+	// IMPORTANT!!!  This line of code is necessary in your AfterFind
+	//               in order for the Find method to work correctly!
 	*episode = Episode(*episode)
 
 	// This is an example of how you can do Rails-like associations.
@@ -35,18 +38,32 @@ func (episode *Episode) AfterFind(db *hare.Database) {
 	// associated host record then populate the embedded Host
 	// struct.
 	host := Host{}
-	err := db.Find("mst3k_hosts", episode.HostID, &host)
-
-	if err == nil {
+	err := db.Find("hosts", episode.HostID, &host)
+	if err != nil {
+		return err
+	} else {
 		episode.Host = host
 	}
+
+	// This is an example of how you can do a Rails-like "has_many"
+	// association.  This will run a query on the comments table and
+	// populate the episode's Comments embedded struct with child
+	// comment records.
+	episode.Comments, err = QueryComments(db, func(c Comment) bool {
+		return c.EpisodeID == episode.ID
+	}, 0)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func QueryEpisodes(db *hare.Database, queryFn func(episode Episode) bool, limit int) ([]Episode, error) {
 	var results []Episode
 	var err error
 
-	ids, err := db.IDs("mst3k_episodes")
+	ids, err := db.IDs("episodes")
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +71,7 @@ func QueryEpisodes(db *hare.Database, queryFn func(episode Episode) bool, limit 
 	for _, id := range ids {
 		episode := Episode{}
 
-		if err = db.Find("mst3k_episodes", id, &episode); err != nil {
+		if err = db.Find("episodes", id, &episode); err != nil {
 			return nil, err
 		}
 
