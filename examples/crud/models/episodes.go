@@ -20,37 +20,37 @@ type Episode struct {
 	Comments []Comment
 }
 
-func (episode *Episode) GetID() int {
-	return episode.ID
+func (e *Episode) GetID() int {
+	return e.ID
 }
 
-func (episode *Episode) SetID(id int) {
-	episode.ID = id
+func (e *Episode) SetID(id int) {
+	e.ID = id
 }
 
-func (episode *Episode) AfterFind(db *hare.Database) error {
+func (e *Episode) AfterFind(db *hare.Database) error {
 	// IMPORTANT!!!  This line of code is necessary in your AfterFind
 	//               in order for the Find method to work correctly!
-	*episode = Episode(*episode)
+	*e = Episode(*e)
 
 	// This is an example of how you can do Rails-like associations.
 	// When an episode is found, this code will run and lookup the
 	// associated host record then populate the embedded Host
 	// struct.
-	host := Host{}
-	err := db.Find("hosts", episode.HostID, &host)
+	h := Host{}
+	err := db.Find("hosts", e.HostID, &h)
 	if err != nil {
 		return err
 	} else {
-		episode.Host = host
+		e.Host = h
 	}
 
 	// This is an example of how you can do a Rails-like "has_many"
 	// association.  This will run a query on the comments table and
 	// populate the episode's Comments embedded struct with child
 	// comment records.
-	episode.Comments, err = QueryComments(db, func(c Comment) bool {
-		return c.EpisodeID == episode.ID
+	e.Comments, err = QueryComments(db, func(c Comment) bool {
+		return c.EpisodeID == e.ID
 	}, 0)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (episode *Episode) AfterFind(db *hare.Database) error {
 	return nil
 }
 
-func QueryEpisodes(db *hare.Database, queryFn func(episode Episode) bool, limit int) ([]Episode, error) {
+func QueryEpisodes(db *hare.Database, queryFn func(e Episode) bool, limit int) ([]Episode, error) {
 	var results []Episode
 	var err error
 
@@ -69,14 +69,14 @@ func QueryEpisodes(db *hare.Database, queryFn func(episode Episode) bool, limit 
 	}
 
 	for _, id := range ids {
-		episode := Episode{}
+		e := Episode{}
 
-		if err = db.Find("episodes", id, &episode); err != nil {
+		if err = db.Find("episodes", id, &e); err != nil {
 			return nil, err
 		}
 
-		if queryFn(episode) {
-			results = append(results, episode)
+		if queryFn(e) {
+			results = append(results, e)
 		}
 
 		if limit != 0 && limit == len(results) {

@@ -27,7 +27,7 @@ func (c *Comment) AfterFind(db *hare.Database) error {
 	return nil
 }
 
-func QueryComments(db *hare.Database, queryFn func(comment Comment) bool, limit int) ([]Comment, error) {
+func QueryComments(db *hare.Database, queryFn func(c Comment) bool, limit int) ([]Comment, error) {
 	var results []Comment
 	var err error
 
@@ -37,14 +37,14 @@ func QueryComments(db *hare.Database, queryFn func(comment Comment) bool, limit 
 	}
 
 	for _, id := range ids {
-		comment := Comment{}
+		c := Comment{}
 
-		if err = db.Find("comments", id, &comment); err != nil {
+		if err = db.Find("comments", id, &c); err != nil {
 			return nil, err
 		}
 
-		if queryFn(comment) {
-			results = append(results, comment)
+		if queryFn(c) {
+			results = append(results, c)
 		}
 
 		if limit != 0 && limit == len(results) {

@@ -26,7 +26,7 @@ func (h *Host) AfterFind(db *hare.Database) error {
 	return nil
 }
 
-func QueryHosts(db *hare.Database, queryFn func(host Host) bool, limit int) ([]Host, error) {
+func QueryHosts(db *hare.Database, queryFn func(h Host) bool, limit int) ([]Host, error) {
 	var results []Host
 	var err error
 
@@ -36,14 +36,14 @@ func QueryHosts(db *hare.Database, queryFn func(host Host) bool, limit int) ([]H
 	}
 
 	for _, id := range ids {
-		host := Host{}
+		h := Host{}
 
-		if err = db.Find("hosts", id, &host); err != nil {
+		if err = db.Find("hosts", id, &h); err != nil {
 			return nil, err
 		}
 
-		if queryFn(host) {
-			results = append(results, host)
+		if queryFn(h) {
+			results = append(results, h)
 		}
 
 		if limit != 0 && limit == len(results) {
