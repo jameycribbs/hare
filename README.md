@@ -50,33 +50,28 @@ Let's say you have a "data" directory with a file in it called "contacts.json".
 The top-level object in Hare is a `Database`. It represents the directory on
 your disk where the JSON files are located.
 
-To open your database, simply use the `hare.OpenDB` function:
+To open your database, you first need to new instance of a datastore.  In this
+example, we are using a "disk" store:
 
 ```go
-// OpenDB takes a directory path containing zero or more JSON files and returns
-// a database connection.
-db, err := hare.OpenDB("data")
-
-defer db.Close()
-...
+ds, err := disk.New("./data", ".json")
 ```
+Hare also has a "ram" store for in-memory databases.
 
-Now, grab a reference to the hare.Table for the JSON file and store it in your
-model:
-
+Now, you will pass the datastore to Hare's New function and it will return
+a Database instance:
 ```go
-var contacts models.Contacts
-
-contacts.Table, err = db.GetTable("contacts")
+db, err := hare.New(ds)
+...
 ```
 
 
 #### Creating a record
 
-To add a record, you can use the `Create` method:
+To add a record, you can use the `Insert` method:
 
 ```go
-recID, err := contacts.Create(&models.Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
+recID, err := db.Insert("contacts", &models.Contact{FirstName: "John", LastName: "Doe", Phone: "888-888-8888", Age: 21})
 ```
 
 
@@ -87,7 +82,7 @@ To find a record if you know the record ID, you can use the `Find` method:
 ```go
 var c models.Contact
 
-err = contacts.Find(1, &c)
+err = db.Find("contacts", 1, &c)
 ```
 
 
@@ -98,26 +93,26 @@ To update a record, you can use the `Update` method:
 ```go
 c.Age = 22
 
-err = contacts.Update(&c)
+err = db.Update("contacts", &c)
 ```
 
 
 #### Deleting a record
 
-To delete a record, you can use the `Destroy` method:
+To delete a record, you can use the `Delete` method:
 
 ```go
-err = contacts.Destroy(3)
+err = db.Delete("contacts", 3)
 ```
 
 
 #### Querying a table
 
 To query the database, you can write your query expression in pure Go and pass
-it to your model's Query method as a closure.
+it to your model's QueryContacts method as a closure.
 
 ```go
-results, err := contacts.Query(func(c models.Contact) bool {
+results, err := models.QueryContacts(db, func(c models.Contact) bool {
   return c.firstname == "John" && c.lastname == "Doe"
 }, 0)
 ```
