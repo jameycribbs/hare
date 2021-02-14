@@ -40,7 +40,8 @@ func (e *Episode) SetID(id int) {
 // AfterFind is a callback that is run by Hare after
 // a record is found.
 // You need to add this method to each one of your
-// models, but the only required line is the first one.
+// models, but the only required lines are the first one
+// and the last one.
 func (e *Episode) AfterFind(db *hare.Database) error {
 	// IMPORTANT!!!  This line of code is necessary in your AfterFind
 	//               in order for the Find method to work correctly!
@@ -50,10 +51,10 @@ func (e *Episode) AfterFind(db *hare.Database) error {
 	// required, but they are a good example of extra
 	// functionality you can implement in your callbacks.
 
-	// This is an example of how you can do Rails-like associations.
-	// When an episode is found, this code will run and lookup the
-	// associated host record then populate the embedded Host
-	// struct.
+	// This is an example of how you can do a Rails-like
+	// "belongs_to" association. When an episode is found, this
+	// code will run and lookup the associated host record then
+	// populate the embedded Host struct.
 	h := Host{}
 	err := db.Find("hosts", e.HostID, &h)
 	if err != nil {
@@ -79,7 +80,7 @@ func (e *Episode) AfterFind(db *hare.Database) error {
 }
 
 // QueryEpisodes takes a Hare db handle and a query function, and returns
-// an array of episodes.  If you add this boilerplate method to your model
+// an array of episodes.  If you add this boilerplate function to your model
 // you can then write queries using a closure as the query language.
 func QueryEpisodes(db *hare.Database, queryFn func(e Episode) bool, limit int) ([]Episode, error) {
 	var results []Episode
