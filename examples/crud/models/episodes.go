@@ -58,9 +58,9 @@ func (e *Episode) AfterFind(db *hare.Database) error {
 	err := db.Find("hosts", e.HostID, &h)
 	if err != nil {
 		return err
-	} else {
-		e.Host = h
 	}
+
+	e.Host = h
 
 	// This is an example of how you can do a Rails-like "has_many"
 	// association.  This will run a query on the comments table and
@@ -78,7 +78,7 @@ func (e *Episode) AfterFind(db *hare.Database) error {
 	return nil
 }
 
-// QueryEpisode takes a Hare db handle and a query function, and returns
+// QueryEpisodes takes a Hare db handle and a query function, and returns
 // an array of episodes.  If you add this boilerplate method to your model
 // you can then write queries using a closure as the query language.
 func QueryEpisodes(db *hare.Database, queryFn func(e Episode) bool, limit int) ([]Episode, error) {
