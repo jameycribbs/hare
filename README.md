@@ -13,7 +13,7 @@ record.  It is a good fit for applications that require a simple embedded DBMS.
   - [Installing](#installing)
   - [Usage](#usage)
 - [Features](#features)
-- [Example Web App](#example-web-app)
+- [Example Web Apps](#example-web-apps)
 
 ## Getting Started
 
@@ -46,16 +46,16 @@ Let's say you have a "data" directory with a file in it called "contacts.json".
 The top-level object in Hare is a `Database`. It represents the directory on
 your disk where the JSON files are located.
 
-To open your database, you first need to new instance of a datastore.  In this
-example, we are using a "disk" store:
+To open your database, you first need a new instance of a datastore.  In this
+example, we are using the `Disk` datastore:
 
 ```go
 ds, err := disk.New("./data", ".json")
 ```
-Hare also has a "ram" store for in-memory databases.
+Hare also has the `Ram` datastore for in-memory databases.
 
 Now, you will pass the datastore to Hare's New function and it will return
-a Database instance:
+a `Database` instance:
 ```go
 db, err := hare.New(ds)
 ```
@@ -137,17 +137,20 @@ There are also built-in methods you can run against the database
 to create a new table or delete an existing table. Take a look at the
 examples/dbadmin/dbadmin.go file for examples of how these can be used.
 
-When Hare updates an existing record, if the changed record datat length is
-shorter than the old data, it will overwrite the old data and pad the extra
-space on the line with all "X"s.
+When Hare updates an existing record, if the changed record's length is
+less than the old record's length, Hare will overwrite the old data
+and pad the extra space on the line with all "X"s.
 
-When Hare updates an existing record, if the changed record data is longer
-than the old data, it will write the changed record to the end of the file
-and overwrite the old record with all "X"s.  Similarly, when it deletes a record,
-it simply overwrites the record with all "X"s.
+If the changed record's length is greater than the old record's length,
+Hare will write the changed record at the end of the file and overwrite
+the old record with all "X"s.
 
-Eventually, you will want to remove these obsolete records.  For an example of
-how to do this, take a look at the examples/dbadmin/compact.go file.
+Similarly, when Hare deletes a record, it simply overwrites the record
+with all "X"s.
+
+Eventually, you will want to remove these obsolete records.  For an
+example of how to do this, take a look at the examples/dbadmin/compact.go
+file.
 
 
 ## Features
@@ -160,13 +163,16 @@ how to do this, take a look at the examples/dbadmin/compact.go file.
 
 * Querying is done using Go itself.  No need to use a DSL.
 
-* Automatic callback is run everytime a record is read, allowing you
-  to do creative things like auto-populate associations, etc.
+* An AfterFind callback is run automatically, everytime a record is
+  read, allowing you to do creative things like auto-populate
+  associations, etc.
   
-* The database is not read into memory, but is queried from disk, so
-  no need to worry about a large dataset filling up memory.
+* When using the `Disk` datastore, the database is not read into
+  memory, but is queried from disk, so no need to worry about a large
+  dataset filling up memory.  Of course, if your database is THAT
+  big, you should probably be using a real DBMS, instead of Hare!
 
-* Two different back-end datastores to choose from:  disk or ram.
+* Two different back-end datastores to choose from:  `Disk` or `Ram`.
 
 ## Example Web Apps
 
