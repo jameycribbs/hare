@@ -41,7 +41,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			db.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := db.Find("contacts", 3, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -87,7 +87,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.TableExists
+			wantErr := dberr.ErrTableExists
 			gotErr := db.CreateTable("contacts")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -105,7 +105,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			wantErr := dberr.NoRecord
+			wantErr := dberr.ErrNoRecord
 			gotErr := db.Find("contacts", 3, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -118,7 +118,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := db.Delete("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -149,7 +149,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := db.DropTable("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -182,7 +182,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.NoRecord
+			wantErr := dberr.ErrNoRecord
 			gotErr := db.Find("contacts", 5, &Contact{})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -220,7 +220,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			_, gotErr := db.IDs("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -263,7 +263,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			_, gotErr := db.Insert("nonexistent", &Contact{FirstName: "Robin", LastName: "Williams", Age: 88})
 
 			if !errors.Is(gotErr, wantErr) {
@@ -321,7 +321,7 @@ func TestAllDatabaseDiskTests(t *testing.T) {
 			db := newTestDatabaseDisk(t)
 			defer db.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := db.Update("nonexistent", &Contact{ID: 4, FirstName: "Hazel", LastName: "Koller", Age: 26})
 
 			if !errors.Is(gotErr, wantErr) {

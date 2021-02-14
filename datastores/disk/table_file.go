@@ -77,7 +77,7 @@ func (t *tableFile) close() error {
 func (t *tableFile) deleteRec(id int) error {
 	offset, ok := t.offsets[id]
 	if !ok {
-		return dberr.NoRecord
+		return dberr.ErrNoRecord
 	}
 
 	rec, err := t.readRec(id)
@@ -204,7 +204,7 @@ func (t *tableFile) overwriteRec(offset int64, recLen int) error {
 func (t *tableFile) readRec(id int) ([]byte, error) {
 	offset, ok := t.offsets[id]
 	if !ok {
-		return nil, dberr.NoRecord
+		return nil, dberr.ErrNoRecord
 	}
 
 	r := bufio.NewReader(t.ptr)
@@ -226,7 +226,7 @@ func (t *tableFile) updateRec(id int, rec []byte) error {
 
 	oldRecOffset, ok := t.offsets[id]
 	if !ok {
-		return dberr.NoRecord
+		return dberr.ErrNoRecord
 	}
 
 	oldRec, err := t.readRec(id)

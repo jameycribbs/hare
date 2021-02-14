@@ -31,7 +31,7 @@ func (ram *Ram) Close() error {
 // and adds it to the map of tables in the datastore.
 func (ram *Ram) CreateTable(tableName string) error {
 	if ram.TableExists(tableName) {
-		return dberr.TableExists
+		return dberr.ErrTableExists
 	}
 
 	ram.tables[tableName] = newTable()
@@ -85,7 +85,7 @@ func (ram *Ram) InsertRec(tableName string, id int, rec []byte) error {
 	}
 
 	if table.recExists(id) {
-		return dberr.IDExists
+		return dberr.ErrIDExists
 	}
 
 	table.writeRec(id, rec)
@@ -113,7 +113,7 @@ func (ram *Ram) ReadRec(tableName string, id int) ([]byte, error) {
 // datastore.
 func (ram *Ram) RemoveTable(tableName string) error {
 	if !ram.TableExists(tableName) {
-		return dberr.NoTable
+		return dberr.ErrNoTable
 	}
 
 	delete(ram.tables, tableName)
@@ -149,7 +149,7 @@ func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 	}
 
 	if !table.recExists(id) {
-		return dberr.NoRecord
+		return dberr.ErrNoRecord
 	}
 
 	table.writeRec(id, rec)
@@ -164,7 +164,7 @@ func (ram *Ram) UpdateRec(tableName string, id int, rec []byte) error {
 func (ram *Ram) getTable(tableName string) (*table, error) {
 	table, ok := ram.tables[tableName]
 	if !ok {
-		return nil, dberr.NoTable
+		return nil, dberr.ErrNoTable
 	}
 
 	return table, nil

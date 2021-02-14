@@ -83,7 +83,7 @@ func (db *Database) Close() error {
 // initializes a new table.
 func (db *Database) CreateTable(tableName string) error {
 	if db.TableExists(tableName) {
-		return dberr.TableExists
+		return dberr.ErrTableExists
 	}
 
 	if err := db.store.CreateTable(tableName); err != nil {
@@ -105,7 +105,7 @@ func (db *Database) CreateTable(tableName string) error {
 // record from the database.
 func (db *Database) Delete(tableName string, id int) error {
 	if !db.TableExists(tableName) {
-		return dberr.NoTable
+		return dberr.ErrNoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -121,7 +121,7 @@ func (db *Database) Delete(tableName string, id int) error {
 // DropTable takes a table name and deletes the table.
 func (db *Database) DropTable(tableName string) error {
 	if !db.TableExists(tableName) {
-		return dberr.NoTable
+		return dberr.ErrNoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -145,7 +145,7 @@ func (db *Database) DropTable(tableName string) error {
 // table, and populates the struct.
 func (db *Database) Find(tableName string, id int, rec Record) error {
 	if !db.TableExists(tableName) {
-		return dberr.NoTable
+		return dberr.ErrNoTable
 	}
 
 	db.locks[tableName].RLock()
@@ -173,7 +173,7 @@ func (db *Database) Find(tableName string, id int, rec Record) error {
 // that table.
 func (db *Database) IDs(tableName string) ([]int, error) {
 	if !db.TableExists(tableName) {
-		return nil, dberr.NoTable
+		return nil, dberr.ErrNoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -192,7 +192,7 @@ func (db *Database) IDs(tableName string) ([]int, error) {
 // new record's id.
 func (db *Database) Insert(tableName string, rec Record) (int, error) {
 	if !db.TableExists(tableName) {
-		return 0, dberr.NoTable
+		return 0, dberr.ErrNoTable
 	}
 
 	db.locks[tableName].Lock()
@@ -224,7 +224,7 @@ func (db *Database) TableExists(tableName string) bool {
 // id.
 func (db *Database) Update(tableName string, rec Record) error {
 	if !db.TableExists(tableName) {
-		return dberr.NoTable
+		return dberr.ErrNoTable
 	}
 
 	db.locks[tableName].Lock()

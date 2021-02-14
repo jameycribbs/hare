@@ -39,7 +39,7 @@ func TestAllTableTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			wantErr := dberr.NoRecord
+			wantErr := dberr.ErrNoRecord
 			_, gotErr := tbl.readRec(3)
 			if !errors.Is(gotErr, wantErr) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)

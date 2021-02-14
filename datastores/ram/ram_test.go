@@ -36,7 +36,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			_, gotErr := ram.ReadRec("contacts", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -73,7 +73,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.TableExists
+			wantErr := dberr.ErrTableExists
 			gotErr := ram.CreateTable("contacts")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -91,7 +91,7 @@ func TestAllRamTests(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			want := dberr.NoRecord
+			want := dberr.ErrNoRecord
 			_, got := ram.ReadRec("contacts", 3)
 
 			if !errors.Is(got, want) {
@@ -104,7 +104,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := ram.DeleteRec("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -133,7 +133,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			_, gotErr := ram.GetLastID("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -171,7 +171,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			_, gotErr := ram.IDs("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -207,7 +207,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := ram.InsertRec("nonexistent", 5, []byte(`{"id":5,"first_name":"Rex","last_name":"Stout","age":77}`))
 
 			if !errors.Is(gotErr, wantErr) {
@@ -220,7 +220,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.IDExists
+			wantErr := dberr.ErrIDExists
 			gotErr := ram.InsertRec("contacts", 3, []byte(`{"id":3,"first_name":"Rex","last_name":"Stout","age":77}`))
 			if !errors.Is(gotErr, wantErr) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
@@ -262,7 +262,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			_, gotErr := ram.ReadRec("nonexistent", 3)
 
 			if !errors.Is(gotErr, wantErr) {
@@ -293,7 +293,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := ram.RemoveTable("nonexistent")
 
 			if !errors.Is(gotErr, wantErr) {
@@ -371,7 +371,7 @@ func TestAllRamTests(t *testing.T) {
 			ram := newTestRam(t)
 			defer ram.Close()
 
-			wantErr := dberr.NoTable
+			wantErr := dberr.ErrNoTable
 			gotErr := ram.UpdateRec("nonexistent", 3, []byte(`{"id":3,"first_name":"William","last_name":"Shakespeare","age":77}`))
 
 			if !errors.Is(gotErr, wantErr) {

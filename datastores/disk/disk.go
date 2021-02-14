@@ -51,7 +51,7 @@ func (dsk *Disk) Close() error {
 // datastore.
 func (dsk *Disk) CreateTable(tableName string) error {
 	if dsk.TableExists(tableName) {
-		return dberr.TableExists
+		return dberr.ErrTableExists
 	}
 
 	filePtr, err := dsk.openFile(tableName, true)
@@ -117,7 +117,7 @@ func (dsk *Disk) InsertRec(tableName string, id int, rec []byte) error {
 	ids := tableFile.ids()
 	for _, i := range ids {
 		if id == i {
-			return dberr.IDExists
+			return dberr.ErrIDExists
 		}
 	}
 
@@ -211,7 +211,7 @@ func (dsk *Disk) UpdateRec(tableName string, id int, rec []byte) error {
 func (dsk *Disk) getTableFile(tableName string) (*tableFile, error) {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return nil, dberr.NoTable
+		return nil, dberr.ErrNoTable
 	}
 
 	return tableFile, nil
@@ -288,7 +288,7 @@ func (dsk Disk) openFile(tableName string, createIfNeeded bool) (*os.File, error
 func (dsk *Disk) closeTable(tableName string) error {
 	tableFile, ok := dsk.tableFiles[tableName]
 	if !ok {
-		return dberr.NoTable
+		return dberr.ErrNoTable
 	}
 
 	if err := tableFile.close(); err != nil {

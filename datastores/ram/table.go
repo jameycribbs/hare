@@ -16,7 +16,7 @@ func newTable() *table {
 
 func (t *table) deleteRec(id int) error {
 	if !t.recExists(id) {
-		return dberr.NoRecord
+		return dberr.ErrNoRecord
 	}
 
 	delete(t.records, id)
@@ -51,7 +51,7 @@ func (t *table) ids() []int {
 func (t *table) readRec(id int) ([]byte, error) {
 	rec, ok := t.records[id]
 	if !ok {
-		return nil, dberr.NoRecord
+		return nil, dberr.ErrNoRecord
 	}
 
 	return rec, nil
