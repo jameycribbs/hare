@@ -30,14 +30,10 @@ $ go get github.com/jameycribbs/hare
 
 #### Setting up Hare to use your JSON file(s)
 
-Each JSON file is represented by a hare.Table.  To set things up, you need to
-create a struct with an embedded pointer to a hare.Table and add a Query method
-to it.
-
-Additionally, you need to create a struct for a table's record, with
-it's members cooresponding to the JSON field names, and implement 3 simple
-boilerplate methods on that struct that allow it to satisfy the hare.Record
-interface.
+A directory of JSON files is represented by a hare.Database. Each JSON file
+needs a struct with it's members cooresponding to the JSON field names.
+Additionally, you need to implement 3 simple boilerplate methods on that
+struct that allow it to satisfy the hare.Record interface.
 
 A good way to structure this is to put this boilerplate code in a "models"
 package in your project.  You can find an example of this boilerplate code in the
@@ -105,10 +101,12 @@ err = db.Delete("contacts", 3)
 ```
 
 
-#### Querying a table
+#### Querying
 
 To query the database, you can write your query expression in pure Go and pass
-it to your model's QueryContacts method as a closure.
+it to your model's QueryContacts method as a closure.  You would need to create
+the QueryContacts function for your model as part of setup.  You can find an
+example of what this function should look like in examples/models/episodes.go.
 
 ```go
 results, err := models.QueryContacts(db, func(c models.Contact) bool {
@@ -120,23 +118,36 @@ results, err := models.QueryContacts(db, func(c models.Contact) bool {
 #### Associations
 
 You can create associations (similar to "belongs_to" in Rails, but with less
-features).  For example, you would create another table called "relationships" with
+features).  For example, you could create another table called "relationships" with
 the fields "id" and "type" (i.e. "Spouse", "Sister", "Co-worker", etc.).  Next,
 you would add a "relationship_id" field to the contacts table and you would also add
 an embeded Relationship struct.  Finally, in the Contact models "AfterFind" method,
 which is automatically called by Hare everytime the "Find" method is executed, you
-would add code to look-up the associated relationship and populate an embedded
+would add code to look-up the associated relationship and populate the embedded
 Relationship struct.  Take a look at the crud.go file in the "examples" directory
 for an example of how this is done.
 
 You can also mimic a "has_many" association, using a similar technique.  Take a
-look at the crud example for how to do that.
+look at the files in the examples directory for how to do that.
 
 
 #### Database Administration
 
 There are also built-in methods you can run against the database
-to create a new table or delete an existing table.
+to create a new table or delete an existing table. Take a look at the
+examples/dbadmin/dbadmin.go file for examples of how these can be used.
+
+When Hare updates an existing record, if the changed record datat length is
+shorter than the old data, it will overwrite the old data and pad the extra
+space on the line with all "X"s.
+
+When Hare updates an existing record, if the changed record data is longer
+than the old data, it will write the changed record to the end of the file
+and overwrite the old record with all "X"s.  Similarly, when it deletes a record,
+it simply overwrites the record with all "X"s.
+
+Eventually, you will want to remove these obsolete records.  For an example of
+how to do this, take a look at the examples/dbadmin/compact.go file.
 
 
 ## Features

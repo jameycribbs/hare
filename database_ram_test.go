@@ -16,7 +16,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 		func(t *testing.T) {
 			//New...
 
-			r, err := ram.NewRam(seedData())
+			r, err := ram.New(seedData())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -367,7 +367,7 @@ func TestAllDatabaseRamTests(t *testing.T) {
 }
 
 func newTestDatabaseRam(t *testing.T) *Database {
-	r, err := ram.NewRam(seedData())
+	r, err := ram.New(seedData())
 	if err != nil {
 		t.Fatal(err)
 	}

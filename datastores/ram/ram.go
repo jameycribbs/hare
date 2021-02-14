@@ -8,9 +8,9 @@ type Ram struct {
 	tables map[string]*table
 }
 
-// NewRam takes a map of maps with seed data
+// New takes a map of maps with seed data
 // and returns a pointer to a Ram struct.
-func NewRam(seedData map[string]map[int]string) (*Ram, error) {
+func New(seedData map[string]map[int]string) (*Ram, error) {
 	var ram Ram
 
 	if err := ram.init(seedData); err != nil {

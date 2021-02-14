@@ -8,7 +8,7 @@ func newTestRam(t *testing.T) *Ram {
 	s := make(map[string]map[int]string)
 	s["contacts"] = seedData()
 
-	ram, err := NewRam(s)
+	ram, err := New(s)
 	if err != nil {
 		t.Fatal(err)
 	}
