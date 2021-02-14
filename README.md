@@ -62,7 +62,6 @@ Now, you will pass the datastore to Hare's New function and it will return
 a Database instance:
 ```go
 db, err := hare.New(ds)
-...
 ```
 
 
