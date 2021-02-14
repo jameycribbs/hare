@@ -6,6 +6,7 @@ import (
 	"github.com/jameycribbs/hare"
 )
 
+// Episode is a record for a MST3K episode.
 type Episode struct {
 	// Required field!!!
 	ID               int       `json:"id"`
@@ -20,18 +21,34 @@ type Episode struct {
 	Comments         []Comment // array of Comment models
 }
 
+// GetID returns the record id.
+// This method is used internally by Hare.
+// You need to add this method to each one of
+// your models.
 func (e *Episode) GetID() int {
 	return e.ID
 }
 
+// SetID takes an id. This method is used
+// internally by Hare.
+// You need to add this method to each one of
+// your models.
 func (e *Episode) SetID(id int) {
 	e.ID = id
 }
 
+// AfterFind is a callback that is run by Hare after
+// a record is found.
+// You need to add this method to each one of your
+// models, but the only required line is the first one.
 func (e *Episode) AfterFind(db *hare.Database) error {
 	// IMPORTANT!!!  This line of code is necessary in your AfterFind
 	//               in order for the Find method to work correctly!
 	*e = Episode(*e)
+
+	// Except for the last line, none of the lines below are
+	// required, but they are a good example of extra
+	// functionality you can implement in your callbacks.
 
 	// This is an example of how you can do Rails-like associations.
 	// When an episode is found, this code will run and lookup the
@@ -56,9 +73,14 @@ func (e *Episode) AfterFind(db *hare.Database) error {
 		return err
 	}
 
+	// IMPORTANT!!!  This line of code is necessary in your AfterFind
+	//               in order for the Find method to work correctly!
 	return nil
 }
 
+// QueryEpisode takes a Hare db handle and a query function, and returns
+// an array of episodes.  If you add this boilerplate method to your model
+// you can then write queries using a closure as the query language.
 func QueryEpisodes(db *hare.Database, queryFn func(e Episode) bool, limit int) ([]Episode, error) {
 	var results []Episode
 	var err error
