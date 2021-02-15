@@ -13,7 +13,6 @@ record.  It is a good fit for applications that require a simple embedded DBMS.
   - [Installing](#installing)
   - [Usage](#usage)
 - [Features](#features)
-- [Example Web Apps](#example-web-apps)
 
 ## Getting Started
 
@@ -104,7 +103,7 @@ err = db.Delete("contacts", 3)
 #### Querying
 
 To query the database, you can write your query expression in pure Go and pass
-it to your model's QueryContacts method as a closure.  You would need to create
+it to your model's QueryContacts function as a closure.  You would need to create
 the QueryContacts function for your model as part of setup.  You can find an
 example of what this function should look like in examples/models/episodes.go.
 
@@ -173,19 +172,3 @@ file.
   big, you should probably be using a real DBMS, instead of Hare!
 
 * Two different back-end datastores to choose from:  `Disk` or `Ram`.
-
-## Example Web Apps
-
-[SnippetBox using Hare](https://www.github.com/jameycribbs/snippetbox_hare)
-This is a version of the SnippetBox web application featured in Alex
-Edward's outstanding book, [Let's Go](https://lets-go.alexedwards.net/),
-with Hare replacing MySQL as the DBMS.  This is just a demonstration,
-mainly to show how you could use Hare in a web application.
-
-[Mule](https://www.github.com/jameycribbs/mule)
-This is a simple web app that tracks expenses and possibly more.  It is
-a WORK IN PROGRESS!  I plan on adding other features like a simple
-calendaring function.  I have attempted to follow best practices from
-the Let's Go book, but I am also structuring it to be more expandable
-by separating the handlers, routes, templates, models into separate
-packages rather than having everything be in the same package.
