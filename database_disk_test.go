@@ -13,6 +13,7 @@ import (
 	"github.com/jameycribbs/hare/dberr"
 )
 
+//gocyclo:ignore
 func TestAllDatabaseDiskTests(t *testing.T) {
 	var tests = []func(t *testing.T){
 		func(t *testing.T) {
