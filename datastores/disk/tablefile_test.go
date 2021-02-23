@@ -11,7 +11,6 @@ import (
 	"github.com/jameycribbs/hare/dberr"
 )
 
-//gocyclo:ignore
 func TestAllTableFileTests(t *testing.T) {
 	var tests = []func(t *testing.T){
 		func(t *testing.T) {
