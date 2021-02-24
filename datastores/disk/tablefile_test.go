@@ -11,7 +11,7 @@ import (
 	"github.com/jameycribbs/hare/dberr"
 )
 
-func TestAllTableFileTests(t *testing.T) {
+func TestNewCloseTableFileTests(t *testing.T) {
 	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//New...
@@ -50,6 +50,13 @@ func TestAllTableFileTests(t *testing.T) {
 				t.Errorf("want %v; got %v", nil, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestDeleteRecTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//deleteRec...
 
@@ -81,6 +88,13 @@ func TestAllTableFileTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestGetLastIDTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//getLastID...
 
@@ -94,6 +108,13 @@ func TestAllTableFileTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestIDsTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//ids...
 
@@ -115,6 +136,13 @@ func TestAllTableFileTests(t *testing.T) {
 				}
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestOffsetsTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//offsetForWritingRec...
 
@@ -163,6 +191,13 @@ func TestAllTableFileTests(t *testing.T) {
 				}
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestOverwriteRecTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//overwriteRec...
 
@@ -194,6 +229,13 @@ func TestAllTableFileTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestReadRecTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//readRec...
 
@@ -212,6 +254,13 @@ func TestAllTableFileTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestUpdateRecTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//updateRec (fits on same line)...
 
@@ -272,6 +321,13 @@ func TestAllTableFileTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestPadRecTableFileTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//padRec...
 

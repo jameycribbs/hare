@@ -5,14 +5,12 @@ import (
 	"os"
 	"reflect"
 	"sort"
-	"strconv"
 	"testing"
 
 	"github.com/jameycribbs/hare/dberr"
 )
 
-//gocyclo:ignore
-func TestAllDiskTests(t *testing.T) {
+func TestNewCloseDiskTests(t *testing.T) {
 	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//New...
@@ -31,10 +29,6 @@ func TestAllDiskTests(t *testing.T) {
 			if want != got {
 				t.Errorf("want %v; got %v", want, got)
 			}
-
-			// DO I STILL NEED THESE?
-			//tf := newTestTableFile(t)
-			//defer tf.close()
 
 			wantOffsets := make(map[int]int64)
 			wantOffsets[1] = 0
@@ -67,6 +61,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", nil, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestCreateTableDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//CreateTable...
 
@@ -107,6 +108,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestDeleteRecDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//DeleteRec...
 
@@ -138,6 +146,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestGetLastIDDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//GetLastID...
 
@@ -167,6 +182,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestIDsDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//IDs...
 
@@ -205,6 +227,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestInsertRecDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//InsertRec...
 
@@ -265,6 +294,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestReadRecDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//ReadRec...
 
@@ -296,6 +332,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestRemoveTableDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//RemoveTable...
 
@@ -336,6 +379,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestTableExistsDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//TableExists...
 
@@ -356,6 +406,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestTableNamesDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//TableNames...
 
@@ -378,6 +435,13 @@ func TestAllDiskTests(t *testing.T) {
 				}
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestUpdateRecDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//UpdateRec...
 
@@ -414,6 +478,13 @@ func TestAllDiskTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestCloseTableDiskTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//closeTable...
 
@@ -440,9 +511,5 @@ func TestAllDiskTests(t *testing.T) {
 		},
 	}
 
-	for i, fn := range tests {
-		testSetup(t)
-		t.Run(strconv.Itoa(i), fn)
-		testTeardown(t)
-	}
+	runTestFns(t, tests)
 }

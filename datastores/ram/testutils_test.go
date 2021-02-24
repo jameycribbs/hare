@@ -1,8 +1,15 @@
 package ram
 
 import (
+	"strconv"
 	"testing"
 )
+
+func runTestFns(t *testing.T, tests []func(t *testing.T)) {
+	for i, fn := range tests {
+		t.Run(strconv.Itoa(i), fn)
+	}
+}
 
 func newTestRam(t *testing.T) *Ram {
 	s := make(map[string]map[int]string)

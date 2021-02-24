@@ -4,14 +4,12 @@ import (
 	"errors"
 	"reflect"
 	"sort"
-	"strconv"
 	"testing"
 
 	"github.com/jameycribbs/hare/dberr"
 )
 
-//gocyclo:ignore
-func TestAllRamTests(t *testing.T) {
+func TestNewCloseRamTests(t *testing.T) {
 	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//New...
@@ -50,6 +48,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", nil, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestCreateTableRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//CreateTable...
 
@@ -81,6 +86,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestDeleteRecRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//DeleteRec...
 
@@ -112,6 +124,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestGetLastIDRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//GetLastID...
 
@@ -141,6 +160,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestIDsRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//IDs...
 
@@ -179,6 +205,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestInsertRecRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//InsertRec...
 
@@ -239,6 +272,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestRecRecRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//ReadRec...
 
@@ -270,6 +310,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestRemoveTableRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//RemoveTable...
 
@@ -301,6 +348,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestTableExistsRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//TableExists...
 
@@ -321,6 +375,13 @@ func TestAllRamTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestTableNamesRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//TableNames...
 
@@ -343,6 +404,13 @@ func TestAllRamTests(t *testing.T) {
 				}
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestUpdateRecRamTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//UpdateRec...
 
@@ -381,7 +449,5 @@ func TestAllRamTests(t *testing.T) {
 		},
 	}
 
-	for i, fn := range tests {
-		t.Run(strconv.Itoa(i), fn)
-	}
+	runTestFns(t, tests)
 }

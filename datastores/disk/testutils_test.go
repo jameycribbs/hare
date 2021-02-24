@@ -3,8 +3,17 @@ package disk
 import (
 	"os"
 	"os/exec"
+	"strconv"
 	"testing"
 )
+
+func runTestFns(t *testing.T, tests []func(t *testing.T)) {
+	for i, fn := range tests {
+		testSetup(t)
+		t.Run(strconv.Itoa(i), fn)
+		testTeardown(t)
+	}
+}
 
 func newTestDisk(t *testing.T) *Disk {
 	dsk, err := New("./testdata", ".json")

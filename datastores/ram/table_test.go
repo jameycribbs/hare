@@ -4,14 +4,12 @@ import (
 	"errors"
 	"reflect"
 	"sort"
-	"strconv"
 	"testing"
 
 	"github.com/jameycribbs/hare/dberr"
 )
 
-//gocyclo:ignore
-func TestAllTableTests(t *testing.T) {
+func TestNewTableTests(t *testing.T) {
 	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//New...
@@ -30,6 +28,13 @@ func TestAllTableTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestDeleteRecTableTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//deleteRec...
 
@@ -46,6 +51,13 @@ func TestAllTableTests(t *testing.T) {
 				t.Errorf("want %v; got %v", wantErr, gotErr)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestGetLastIDTableTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//getLastID...
 
@@ -58,6 +70,13 @@ func TestAllTableTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestIDsTableTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//ids...
 
@@ -78,6 +97,13 @@ func TestAllTableTests(t *testing.T) {
 				}
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestReadRecTableTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//readRec...
 
@@ -95,6 +121,13 @@ func TestAllTableTests(t *testing.T) {
 				t.Errorf("want %v; got %v", want, got)
 			}
 		},
+	}
+
+	runTestFns(t, tests)
+}
+
+func TestWriteRecTableTests(t *testing.T) {
+	var tests = []func(t *testing.T){
 		func(t *testing.T) {
 			//writeRec
 
@@ -114,7 +147,5 @@ func TestAllTableTests(t *testing.T) {
 		},
 	}
 
-	for i, fn := range tests {
-		t.Run(strconv.Itoa(i), fn)
-	}
+	runTestFns(t, tests)
 }
